@@ -26,7 +26,6 @@ const Produtos = () => {
     } catch (error) {
       console.error('Erro ao buscar produtos:', error);
       toast({
-        title: 'Erro',
         description: 'Não foi possível carregar os produtos.',
         variant: 'destructive',
       });
