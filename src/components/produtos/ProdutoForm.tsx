@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Categoria } from "@/types";
+import { normalizeCategoria } from "@/utils/normalizeData";
 import {
   Select,
   SelectContent,
@@ -90,7 +91,10 @@ export function ProdutoForm({
           .order("nome");
         
         if (error) throw error;
-        setCategorias(data || []);
+        
+        // Transform the data to match our Categoria type
+        const normalizedCategorias = data?.map(cat => normalizeCategoria(cat)) || [];
+        setCategorias(normalizedCategorias);
       } catch (error: any) {
         console.error("Erro ao carregar categorias:", error);
         toast("Erro ao carregar categorias", {
@@ -141,8 +145,15 @@ export function ProdutoForm({
       setIsSubmitting(true);
       
       const produtoData = {
-        ...values,
+        nome: values.nome,
+        preco: values.preco,
+        quantidade: values.quantidade,
+        validade: values.validade ? values.validade.toISOString().split('T')[0] : null,
+        codigo_rastreio: values.codigo_rastreio || null,
+        categoria_id: values.categoria_id || null,
+        descricao: values.descricao || null,
         empresa_id: user.empresaId,
+        data_entrada: new Date().toISOString(),
       };
       
       let response;

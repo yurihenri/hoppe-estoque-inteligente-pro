@@ -34,8 +34,10 @@ import { Box, Edit, Plus, Search, Trash2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/contexts/AuthContext';
+import { Produto } from '@/types';
+import { normalizeProduto } from '@/utils/normalizeData';
 
-interface Produto {
+interface RawProduto {
   id: string;
   nome: string;
   preco: number;
@@ -55,11 +57,11 @@ interface Produto {
 const Produtos = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [produtos, setProdutos] = useState<RawProduto[]>([]);
   const [isFormOpen, setIsFormOpen] = useState(false);
-  const [selectedProduto, setSelectedProduto] = useState<Produto | null>(null);
+  const [selectedProduto, setSelectedProduto] = useState<RawProduto | null>(null);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
-  const [produtoToDelete, setProdutoToDelete] = useState<Produto | null>(null);
+  const [produtoToDelete, setProdutoToDelete] = useState<RawProduto | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
@@ -104,12 +106,12 @@ const Produtos = () => {
     setIsFormOpen(true);
   };
 
-  const handleOpenEditForm = (produto: Produto) => {
+  const handleOpenEditForm = (produto: RawProduto) => {
     setSelectedProduto(produto);
     setIsFormOpen(true);
   };
 
-  const handleDeleteProduto = (produto: Produto) => {
+  const handleDeleteProduto = (produto: RawProduto) => {
     setProdutoToDelete(produto);
     setDeleteConfirmOpen(true);
   };

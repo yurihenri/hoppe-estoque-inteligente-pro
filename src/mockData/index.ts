@@ -1,4 +1,3 @@
-
 import { Alerta, Categoria, DadosDashboard, Empresa, Lote, Movimentacao, Produto, StatusLote, Usuario } from "../types";
 
 // Dados da empresa atual
@@ -17,9 +16,9 @@ export const usuarioLogado: Usuario = {
   nome: "João Silva",
   email: "joao@modelo.com",
   cargo: "Gerente de Estoque",
-  avatar: "/avatar.png",
-  permissoes: ["gerente"],
-  empresaId: "1"
+  avatarUrl: "/avatar.png",
+  empresaId: "1",
+  createdAt: new Date().toISOString()
 };
 
 // Categorias
@@ -29,73 +28,6 @@ export const categorias: Categoria[] = [
   { id: "3", nome: "Hortifruti", cor: "#0EA5E9", descricao: "Frutas, legumes e verduras", empresaId: "1" },
   { id: "4", nome: "Carnes", cor: "#EF4444", descricao: "Carnes e derivados", empresaId: "1" },
   { id: "5", nome: "Bebidas", cor: "#8B5CF6", descricao: "Bebidas em geral", empresaId: "1" }
-];
-
-// Produtos
-export const produtos: Produto[] = [
-  { 
-    id: "1", 
-    nome: "Leite Integral", 
-    descricao: "Leite integral 1L", 
-    codigoBarras: "7891234567890", 
-    preco: 4.99, 
-    imagem: "/leite.jpg", 
-    categoriaId: "1", 
-    empresaId: "1", 
-    unidade: "L", 
-    estoqueMinimo: 20, 
-    estoqueAtual: 45 
-  },
-  { 
-    id: "2", 
-    nome: "Pão Francês", 
-    descricao: "Pão francês tradicional", 
-    codigoBarras: "7891234567891", 
-    preco: 0.75, 
-    categoriaId: "2", 
-    empresaId: "1", 
-    unidade: "Un", 
-    estoqueMinimo: 50, 
-    estoqueAtual: 120 
-  },
-  { 
-    id: "3", 
-    nome: "Maçã Fuji", 
-    descricao: "Maçã fuji fresca", 
-    codigoBarras: "7891234567892", 
-    preco: 8.99, 
-    imagem: "/maca.jpg", 
-    categoriaId: "3", 
-    empresaId: "1", 
-    unidade: "Kg", 
-    estoqueMinimo: 15, 
-    estoqueAtual: 8 
-  },
-  { 
-    id: "4", 
-    nome: "Filé Mignon", 
-    descricao: "Filé mignon bovino", 
-    codigoBarras: "7891234567893", 
-    preco: 89.90, 
-    categoriaId: "4", 
-    empresaId: "1", 
-    unidade: "Kg", 
-    estoqueMinimo: 10, 
-    estoqueAtual: 15 
-  },
-  { 
-    id: "5", 
-    nome: "Água Mineral", 
-    descricao: "Água mineral sem gás 500ml", 
-    codigoBarras: "7891234567894", 
-    preco: 2.50, 
-    imagem: "/agua.jpg", 
-    categoriaId: "5", 
-    empresaId: "1", 
-    unidade: "Un", 
-    estoqueMinimo: 30, 
-    estoqueAtual: 78 
-  }
 ];
 
 // Função para criar data no passado (dias)
@@ -111,6 +43,78 @@ const diasFuturos = (dias: number): Date => {
   data.setDate(data.getDate() + dias);
   return data;
 };
+
+// Produtos
+export const produtos: Produto[] = [
+  { 
+    id: "1", 
+    nome: "Leite Integral", 
+    descricao: "Leite integral 1L", 
+    codigoBarras: "7891234567890", 
+    preco: 4.99, 
+    imagem: "/leite.jpg", 
+    categoriaId: "1", 
+    empresaId: "1", 
+    unidade: "L", 
+    estoqueMinimo: 20, 
+    estoqueAtual: 45,
+    dataEntrada: new Date().toISOString()
+  },
+  { 
+    id: "2", 
+    nome: "Pão Francês", 
+    descricao: "Pão francês tradicional", 
+    codigoBarras: "7891234567891", 
+    preco: 0.75, 
+    categoriaId: "2", 
+    empresaId: "1", 
+    unidade: "Un", 
+    estoqueMinimo: 50, 
+    estoqueAtual: 120,
+    dataEntrada: new Date().toISOString()
+  },
+  { 
+    id: "3", 
+    nome: "Maçã Fuji", 
+    descricao: "Maçã fuji fresca", 
+    codigoBarras: "7891234567892", 
+    preco: 8.99, 
+    imagem: "/maca.jpg", 
+    categoriaId: "3", 
+    empresaId: "1", 
+    unidade: "Kg", 
+    estoqueMinimo: 15, 
+    estoqueAtual: 8,
+    dataEntrada: new Date().toISOString()
+  },
+  { 
+    id: "4", 
+    nome: "Filé Mignon", 
+    descricao: "Filé mignon bovino", 
+    codigoBarras: "7891234567893", 
+    preco: 89.90, 
+    categoriaId: "4", 
+    empresaId: "1", 
+    unidade: "Kg", 
+    estoqueMinimo: 10, 
+    estoqueAtual: 15,
+    dataEntrada: new Date().toISOString()
+  },
+  { 
+    id: "5", 
+    nome: "Água Mineral", 
+    descricao: "Água mineral sem gás 500ml", 
+    codigoBarras: "7891234567894", 
+    preco: 2.50, 
+    imagem: "/agua.jpg", 
+    categoriaId: "5", 
+    empresaId: "1", 
+    unidade: "Un", 
+    estoqueMinimo: 30, 
+    estoqueAtual: 78,
+    dataEntrada: new Date().toISOString()
+  }
+];
 
 // Função para determinar o status do lote
 const determinarStatusLote = (dataValidade: Date): StatusLote => {

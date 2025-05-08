@@ -10,6 +10,7 @@ export interface Categoria {
   descricao?: string;
   parentId?: string;
   empresaId: string;
+  createdAt?: string;
 }
 
 export const mapDbToCategoria = (dbCategoria: DatabaseCategoria): Categoria => ({
@@ -19,6 +20,7 @@ export const mapDbToCategoria = (dbCategoria: DatabaseCategoria): Categoria => (
   descricao: dbCategoria.descricao || undefined,
   parentId: dbCategoria.parent_id || undefined,
   empresaId: dbCategoria.empresa_id,
+  createdAt: dbCategoria.created_at,
 });
 
 export interface CategoriasFormValues {

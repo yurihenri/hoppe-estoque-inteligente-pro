@@ -6,9 +6,10 @@ export interface Usuario {
   nome: string;
   email: string;
   cargo?: string;
-  avatar_url?: string;
+  avatarUrl?: string;
   empresaId: string;
   empresa?: Empresa;
+  createdAt: string;
 }
 
 export type Permissao = 
@@ -33,6 +34,7 @@ export interface Categoria {
   descricao?: string;
   parentId?: string;
   empresaId: string;
+  createdAt?: string;
 }
 
 export interface Produto {
@@ -47,8 +49,8 @@ export interface Produto {
   unidade: string;
   estoqueMinimo: number;
   estoqueAtual: number;
-  validade?: Date;
-  dataEntrada: Date;
+  validade?: string; // ISO date string
+  dataEntrada: string; // ISO date string
   codigoRastreio?: string;
 }
 
