@@ -47,6 +47,128 @@ export type Database = {
           },
         ]
       }
+      empresas: {
+        Row: {
+          cnpj: string | null
+          created_at: string
+          id: string
+          nome: string
+          segmento: string | null
+        }
+        Insert: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome: string
+          segmento?: string | null
+        }
+        Update: {
+          cnpj?: string | null
+          created_at?: string
+          id?: string
+          nome?: string
+          segmento?: string | null
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          categoria_id: string | null
+          codigo_rastreio: string | null
+          created_at: string
+          data_entrada: string
+          descricao: string | null
+          empresa_id: string
+          id: string
+          nome: string
+          preco: number
+          quantidade: number
+          updated_at: string
+          validade: string | null
+        }
+        Insert: {
+          categoria_id?: string | null
+          codigo_rastreio?: string | null
+          created_at?: string
+          data_entrada?: string
+          descricao?: string | null
+          empresa_id: string
+          id?: string
+          nome: string
+          preco: number
+          quantidade?: number
+          updated_at?: string
+          validade?: string | null
+        }
+        Update: {
+          categoria_id?: string | null
+          codigo_rastreio?: string | null
+          created_at?: string
+          data_entrada?: string
+          descricao?: string | null
+          empresa_id?: string
+          id?: string
+          nome?: string
+          preco?: number
+          quantidade?: number
+          updated_at?: string
+          validade?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "produtos_categoria_id_fkey"
+            columns: ["categoria_id"]
+            isOneToOne: false
+            referencedRelation: "categorias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "produtos_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          cargo: string | null
+          created_at: string
+          email: string
+          empresa_id: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string
+          email: string
+          empresa_id?: string | null
+          id: string
+          nome: string
+        }
+        Update: {
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string
+          email?: string
+          empresa_id?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never

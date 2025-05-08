@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { 
   BarChart, 
   Package, 
@@ -14,17 +14,24 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { usuarioLogado } from "@/mockData";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SidebarProps {
   className?: string;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ className }) => {
+  const { user, logout } = useAuth();
   const [expanded, setExpanded] = useState(true);
+  const navigate = useNavigate();
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
+  };
+
+  const handleLogout = async () => {
+    await logout();
+    navigate("/login");
   };
 
   return (
@@ -54,19 +61,22 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       {/* Usuário logado */}
       <div className="flex items-center p-4 border-b border-border">
         <div className="h-10 w-10 rounded-full bg-hoppe-200 flex items-center justify-center text-hoppe-700 font-semibold">
-          {usuarioLogado.nome.substring(0, 2).toUpperCase()}
+          {user?.nome 
+            ? user.nome.substring(0, 2).toUpperCase() 
+            : user?.email?.substring(0, 2).toUpperCase() || "??"
+          }
         </div>
         {expanded && (
           <div className="ml-3 overflow-hidden">
-            <p className="font-medium text-sm truncate">{usuarioLogado.nome}</p>
-            <p className="text-xs text-muted-foreground truncate">{usuarioLogado.cargo}</p>
+            <p className="font-medium text-sm truncate">{user?.nome || user?.email}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.cargo || "Usuário"}</p>
           </div>
         )}
       </div>
 
       {/* Navegação */}
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto scrollbar-hide">
-        <NavItem to="/" icon={<BarChart size={20} />} label="Dashboard" expanded={expanded} />
+        <NavItem to="/dashboard" icon={<BarChart size={20} />} label="Dashboard" expanded={expanded} />
         <NavItem to="/produtos" icon={<Package size={20} />} label="Produtos" expanded={expanded} />
         <NavItem to="/categorias" icon={<Tag size={20} />} label="Categorias" expanded={expanded} />
         <NavItem to="/alertas" icon={<Bell size={20} />} label="Alertas" expanded={expanded} />
@@ -76,7 +86,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
 
       {/* Rodapé */}
       <div className="p-2 mt-auto border-t border-border">
-        <Button variant="ghost" className="w-full justify-start" size="sm">
+        <Button variant="ghost" className="w-full justify-start" size="sm" onClick={handleLogout}>
           <LogOut size={20} className="mr-2" />
           {expanded && <span>Sair</span>}
         </Button>

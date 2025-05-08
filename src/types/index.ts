@@ -5,10 +5,10 @@ export interface Usuario {
   id: string;
   nome: string;
   email: string;
-  cargo: string;
-  avatar?: string;
-  permissoes: Permissao[];
+  cargo?: string;
+  avatar_url?: string;
   empresaId: string;
+  empresa?: Empresa;
 }
 
 export type Permissao = 
@@ -20,10 +20,10 @@ export type Permissao =
 export interface Empresa {
   id: string;
   nome: string;
-  cnpj: string;
+  cnpj?: string;
   logo?: string;
-  segmento: string;
-  endereco: string;
+  segmento?: string;
+  endereco?: string;
 }
 
 export interface Categoria {
@@ -42,11 +42,14 @@ export interface Produto {
   codigoBarras?: string;
   preco: number;
   imagem?: string;
-  categoriaId: string;
+  categoriaId?: string;
   empresaId: string;
   unidade: string;
   estoqueMinimo: number;
   estoqueAtual: number;
+  validade?: Date;
+  dataEntrada: Date;
+  codigoRastreio?: string;
 }
 
 export interface Lote {
