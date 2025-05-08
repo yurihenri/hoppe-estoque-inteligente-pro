@@ -26,7 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/components/ui/sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -39,6 +39,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const produtoSchema = z.object({
   nome: z.string().min(2, "O nome é obrigatório"),
@@ -47,7 +57,10 @@ const produtoSchema = z.object({
   validade: z.date().optional(),
   codigo_rastreio: z.string().optional(),
   categoria_id: z.string().optional(),
+  nova_categoria: z.string().optional(),
+  nova_categoria_cor: z.string().optional(),
   descricao: z.string().optional(),
+  data_entrada: z.date().optional(),
 });
 
 type ProdutoFormValues = z.infer<typeof produtoSchema>;
@@ -68,6 +81,8 @@ export function ProdutoForm({
   const { user } = useAuth();
   const [categorias, setCategorias] = useState<Categoria[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showNovaCategoriaInput, setShowNovaCategoriaInput] = useState(false);
+  const [showCorConfirmacao, setShowCorConfirmacao] = useState(false);
 
   const form = useForm<ProdutoFormValues>({
     resolver: zodResolver(produtoSchema),
@@ -78,7 +93,10 @@ export function ProdutoForm({
       validade: produto?.validade ? new Date(produto.validade) : undefined,
       codigo_rastreio: produto?.codigo_rastreio || "",
       categoria_id: produto?.categoria_id || undefined,
+      nova_categoria: "",
+      nova_categoria_cor: "#3B82F6", // Default blue color
       descricao: produto?.descricao || "",
+      data_entrada: produto?.data_entrada ? new Date(produto.data_entrada) : new Date(),
     },
   });
 
@@ -118,7 +136,10 @@ export function ProdutoForm({
         validade: produto.validade ? new Date(produto.validade) : undefined,
         codigo_rastreio: produto.codigo_rastreio || "",
         categoria_id: produto.categoria_id || undefined,
+        nova_categoria: "",
+        nova_categoria_cor: "#3B82F6",
         descricao: produto.descricao || "",
+        data_entrada: produto.data_entrada ? new Date(produto.data_entrada) : new Date(),
       });
     } else {
       form.reset({
@@ -128,10 +149,55 @@ export function ProdutoForm({
         validade: undefined,
         codigo_rastreio: "",
         categoria_id: undefined,
+        nova_categoria: "",
+        nova_categoria_cor: "#3B82F6",
         descricao: "",
+        data_entrada: new Date(),
       });
     }
   }, [produto, form]);
+
+  const handleAddNovaCategoria = async () => {
+    try {
+      const novaCategoriaValue = form.getValues("nova_categoria");
+      const novaCategoriaCor = form.getValues("nova_categoria_cor");
+      
+      if (!novaCategoriaValue || novaCategoriaValue.trim() === "" || !user?.empresaId) {
+        return;
+      }
+      
+      const { data, error } = await supabase
+        .from("categorias")
+        .insert({
+          nome: novaCategoriaValue,
+          cor: novaCategoriaCor,
+          empresa_id: user.empresaId,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      const novaCategoria = normalizeCategoria(data);
+      setCategorias(cats => [...cats, novaCategoria]);
+      
+      // Set the new category ID in the form
+      form.setValue("categoria_id", novaCategoria.id);
+      
+      // Reset the nova_categoria field and hide the input
+      form.setValue("nova_categoria", "");
+      setShowNovaCategoriaInput(false);
+      
+      toast("Categoria adicionada", {
+        description: `A categoria ${novaCategoria.nome} foi criada com sucesso.`,
+      });
+    } catch (error: any) {
+      console.error("Erro ao adicionar categoria:", error);
+      toast("Erro ao adicionar categoria", {
+        description: error.message,
+      });
+    }
+  };
 
   const onSubmit = async (values: ProdutoFormValues) => {
     if (!user?.empresaId) {
@@ -144,16 +210,43 @@ export function ProdutoForm({
     try {
       setIsSubmitting(true);
       
+      // First, check if we need to create a new category
+      let categoriaId = values.categoria_id;
+      
+      if (values.nova_categoria && values.nova_categoria.trim() !== "") {
+        const { data, error } = await supabase
+          .from("categorias")
+          .insert({
+            nome: values.nova_categoria,
+            cor: values.nova_categoria_cor || "#3B82F6",
+            empresa_id: user.empresaId,
+          })
+          .select()
+          .single();
+        
+        if (error) throw error;
+        
+        categoriaId = data.id;
+        
+        // Add to the categories list
+        const novaCategoria = normalizeCategoria(data);
+        setCategorias(cats => [...cats, novaCategoria]);
+        
+        toast("Categoria adicionada", {
+          description: `A categoria ${values.nova_categoria} foi criada e associada ao produto.`,
+        });
+      }
+      
       const produtoData = {
         nome: values.nome,
         preco: values.preco,
         quantidade: values.quantidade,
         validade: values.validade ? values.validade.toISOString().split('T')[0] : null,
         codigo_rastreio: values.codigo_rastreio || null,
-        categoria_id: values.categoria_id || null,
+        categoria_id: categoriaId || null,
         descricao: values.descricao || null,
         empresa_id: user.empresaId,
-        data_entrada: new Date().toISOString(),
+        data_entrada: values.data_entrada ? values.data_entrada.toISOString() : new Date().toISOString(),
       };
       
       let response;
@@ -197,188 +290,334 @@ export function ProdutoForm({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
-        <DialogHeader>
-          <DialogTitle>
-            {produto ? "Editar Produto" : "Novo Produto"}
-          </DialogTitle>
-        </DialogHeader>
-        
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="nome"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome*</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome do produto" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <div className="grid grid-cols-2 gap-4">
+    <>
+      <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>
+              {produto ? "Editar Produto" : "Novo Produto"}
+            </DialogTitle>
+          </DialogHeader>
+          
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="preco"
+                name="nome"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Preço*</FormLabel>
+                    <FormLabel>Nome*</FormLabel>
                     <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        placeholder="0.00"
-                        {...field}
-                      />
+                      <Input placeholder="Nome do produto" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="quantidade"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Quantidade*</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        min="0"
-                        placeholder="0"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="categoria_id"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria</FormLabel>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={field.value}
-                    value={field.value}
-                  >
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {categorias.map((categoria) => (
-                        <SelectItem key={categoria.id} value={categoria.id}>
-                          {categoria.nome}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="codigo_rastreio"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Código de Rastreio</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Código de rastreio" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="validade"
-              render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Data de Validade</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="preco"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preço*</FormLabel>
                       <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: ptBR })
-                          ) : (
-                            <span>Selecione uma data</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          {...field}
+                        />
                       </FormControl>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        disabled={(date) => date < new Date()}
-                        initialFocus
-                        className={cn("p-3 pointer-events-auto")}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
+                <FormField
+                  control={form.control}
+                  name="quantidade"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Quantidade*</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="0"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {showNovaCategoriaInput ? (
+                <>
+                  <FormField
+                    control={form.control}
+                    name="nova_categoria"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Nova Categoria*</FormLabel>
+                        <div className="flex gap-2">
+                          <FormControl className="flex-1">
+                            <Input placeholder="Nome da nova categoria" {...field} />
+                          </FormControl>
+                          <FormField
+                            control={form.control}
+                            name="nova_categoria_cor"
+                            render={({ field: colorField }) => (
+                              <FormControl>
+                                <Input
+                                  type="color"
+                                  className="w-12 h-10 p-1 cursor-pointer"
+                                  {...colorField}
+                                />
+                              </FormControl>
+                            )}
+                          />
+                          <Button 
+                            type="button" 
+                            variant="outline"
+                            onClick={() => {
+                              setShowNovaCategoriaInput(false);
+                              form.setValue("nova_categoria", "");
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </>
+              ) : (
+                <FormField
+                  control={form.control}
+                  name="categoria_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <div className="flex gap-2 w-full">
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
+                            <Button 
+                              type="button" 
+                              size="icon" 
+                              onClick={() => setShowNovaCategoriaInput(true)}
+                              title="Adicionar nova categoria"
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </FormControl>
+                        <SelectContent>
+                          {categorias.map((categoria) => (
+                            <SelectItem key={categoria.id} value={categoria.id}>
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className="w-3 h-3 rounded-full"
+                                  style={{ backgroundColor: categoria.cor }}
+                                />
+                                {categoria.nome}
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              )}
+
+              <FormField
+                control={form.control}
+                name="codigo_rastreio"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Código de Rastreio</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Código de rastreio" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="validade"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data de Validade</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) => date < new Date() && !produto}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="data_entrada"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                      <FormLabel>Data de Entrada</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "PPP", { locale: ptBR })
+                              ) : (
+                                <span>Selecione uma data</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            initialFocus
+                            className={cn("p-3 pointer-events-auto")}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="descricao"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Descrição do produto"
+                        className="resize-none"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <DialogFooter>
+                <Button variant="outline" type="button" onClick={onClose}>
+                  Cancelar
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting
+                    ? "Salvando..."
+                    : produto
+                    ? "Atualizar"
+                    : "Cadastrar"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Confirmation dialog for adding a category */}
+      <AlertDialog open={showCorConfirmacao} onOpenChange={setShowCorConfirmacao}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Escolha uma cor para a categoria</AlertDialogTitle>
+            <AlertDialogDescription>
+              Selecione uma cor para identificar a categoria {form.getValues("nova_categoria")}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
             <FormField
               control={form.control}
-              name="descricao"
+              name="nova_categoria_cor"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Descrição</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="Descrição do produto"
-                      className="resize-none"
+                  <div className="flex items-center gap-4">
+                    <Input 
+                      type="color"
+                      className="w-20 h-10 p-1 cursor-pointer"
                       {...field}
                     />
-                  </FormControl>
+                    <Input
+                      placeholder="#RRGGBB"
+                      {...field}
+                      className="flex-1"
+                    />
+                  </div>
                   <FormMessage />
                 </FormItem>
               )}
             />
-
-            <DialogFooter>
-              <Button variant="outline" type="button" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting
-                  ? "Salvando..."
-                  : produto
-                  ? "Atualizar"
-                  : "Cadastrar"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleAddNovaCategoria}
+            >
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

@@ -18,18 +18,18 @@ import { useAuth } from '@/contexts/AuthContext';
 import { RegisterData } from '@/types/auth';
 
 const registerSchema = z.object({
-  nome: z.string().min(3, 'O nome deve ter pelo menos 3 caracteres'),
+  nome: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres'),
+  empresa: z.string().min(2, 'O nome da empresa deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
-  empresa: z.string().min(2, 'Nome da empresa é obrigatório'),
 });
 
 const Register = () => {
-  const { register: registerUser, isLoading, error } = useAuth();
+  const { register, isLoading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   
   const {
-    register,
+    register: registerField,
     handleSubmit,
     formState: { errors },
   } = useForm<RegisterData>({
@@ -37,7 +37,7 @@ const Register = () => {
   });
 
   const onSubmit = async (data: RegisterData) => {
-    await registerUser(data.email, data.password, data.nome, data.empresa);
+    await register(data.email, data.password, data.nome, data.empresa);
   };
 
   return (
@@ -55,14 +55,28 @@ const Register = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="nome">Nome Completo</Label>
+                <Label htmlFor="nome">Nome</Label>
                 <Input
                   id="nome"
-                  placeholder="Seu Nome"
-                  {...register('nome')}
+                  type="text"
+                  placeholder="Seu nome completo"
+                  {...registerField('nome')}
                 />
                 {errors.nome && (
                   <p className="text-sm text-red-500">{errors.nome.message}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="empresa">Nome da Empresa</Label>
+                <Input
+                  id="empresa"
+                  type="text"
+                  placeholder="Nome da sua empresa"
+                  {...registerField('empresa')}
+                />
+                {errors.empresa && (
+                  <p className="text-sm text-red-500">{errors.empresa.message}</p>
                 )}
               </div>
               
@@ -72,22 +86,10 @@ const Register = () => {
                   id="email"
                   type="email"
                   placeholder="seu@email.com"
-                  {...register('email')}
+                  {...registerField('email')}
                 />
                 {errors.email && (
                   <p className="text-sm text-red-500">{errors.email.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="empresa">Nome da Empresa</Label>
-                <Input
-                  id="empresa"
-                  placeholder="Nome da sua Empresa"
-                  {...register('empresa')}
-                />
-                {errors.empresa && (
-                  <p className="text-sm text-red-500">{errors.empresa.message}</p>
                 )}
               </div>
               
@@ -98,7 +100,7 @@ const Register = () => {
                     id="password"
                     type={showPassword ? 'text' : 'password'}
                     placeholder="••••••••"
-                    {...register('password')}
+                    {...registerField('password')}
                   />
                   <Button
                     type="button"
@@ -124,13 +126,13 @@ const Register = () => {
                 className="w-full"
                 disabled={isLoading}
               >
-                {isLoading ? 'Criando conta...' : 'Cadastrar'}
+                {isLoading ? 'Cadastrando...' : 'Cadastrar'}
               </Button>
               
               <p className="mt-4 text-center text-sm text-muted-foreground">
-                Já possui uma conta?{' '}
+                Já tem uma conta?{' '}
                 <Link to="/login" className="text-hoppe-600 hover:underline">
-                  Fazer login
+                  Faça login
                 </Link>
               </p>
             </CardFooter>
