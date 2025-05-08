@@ -25,7 +25,7 @@ const registerSchema = z.object({
 });
 
 const Register = () => {
-  const { register: signUp, isLoading, error } = useAuth();
+  const { register: registerUser, isLoading, error } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   
   const {
@@ -37,7 +37,7 @@ const Register = () => {
   });
 
   const onSubmit = async (data: RegisterData) => {
-    await signUp(data);
+    await registerUser(data.email, data.password, data.nome, data.empresa);
   };
 
   return (

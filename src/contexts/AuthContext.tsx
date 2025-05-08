@@ -11,9 +11,9 @@ interface AuthState {
 }
 
 interface AuthContextType extends AuthState {
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, nome: string, empresa: string) => Promise<void>;
-  signOut: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, nome: string, empresa: string) => Promise<void>;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -98,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     };
   }, []);
 
-  const signIn = async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
@@ -116,7 +116,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, nome: string, empresa: string) => {
+  const register = async (email: string, password: string, nome: string, empresa: string) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
@@ -140,7 +140,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const signOut = async () => {
+  const logout = async () => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
@@ -159,9 +159,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     <AuthContext.Provider
       value={{
         ...authState,
-        signIn,
-        signUp,
-        signOut,
+        login,
+        register,
+        logout,
       }}
     >
       {children}

@@ -35,7 +35,7 @@ const Login = () => {
   });
 
   const onSubmit = async (data: Credentials) => {
-    await login(data);
+    await login(data.email, data.password);
   };
 
   return (
