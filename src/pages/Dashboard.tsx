@@ -55,21 +55,21 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <CardEstatistica
             titulo="Total de Produtos"
-            valor={isLoading ? "-" : dashboardStats?.totalProdutos || 0}
+            valor={isLoading ? 0 : Number(dashboardStats?.totalProdutos || 0)}
             descricao="Produtos cadastrados no sistema"
             icone={<Package size={20} className="text-hoppe-600" />}
             corIcone="bg-hoppe-100"
           />
           <CardEstatistica
             titulo="Produtos a Vencer"
-            valor={isLoading ? "-" : dashboardStats?.produtosAVencer || 0}
+            valor={isLoading ? 0 : Number(dashboardStats?.produtosAVencer || 0)}
             descricao="Vencem nos próximos 7 dias"
             icone={<AlertTriangle size={20} className="text-alerta-500" />}
             corIcone="bg-alerta-100"
           />
           <CardEstatistica
             titulo="Produtos Vencidos"
-            valor={isLoading ? "-" : dashboardStats?.produtosVencidos || 0}
+            valor={isLoading ? 0 : Number(dashboardStats?.produtosVencidos || 0)}
             descricao="Necessitam descarte imediato"
             icone={<Trash2 size={20} className="text-erro-500" />}
             corIcone="bg-erro-100"
