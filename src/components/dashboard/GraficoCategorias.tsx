@@ -2,11 +2,50 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { categorias, dadosDashboard } from "@/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 const GraficoCategorias: React.FC = () => {
-  // Obter cores para cada categoria
-  const cores = categorias.map((categoria) => categoria.cor);
+  const { data: distribuicaoCategorias, isLoading } = useQuery({
+    queryKey: ['distribuicaoCategorias'],
+    queryFn: async () => {
+      // Fetch categorias count
+      const { data: categoriasData, error } = await supabase
+        .from('categorias')
+        .select('id, nome, cor');
+      
+      if (error) throw error;
+
+      // Get count of produtos per categoria
+      const produtosPromises = categoriasData.map(async (categoria) => {
+        const { count, error: countError } = await supabase
+          .from('produtos')
+          .select('id', { count: 'exact', head: true })
+          .eq('categoria_id', categoria.id);
+          
+        if (countError) throw countError;
+        
+        return {
+          categoria: categoria.nome,
+          quantidade: count || 0,
+          cor: categoria.cor || '#3B82F6'
+        };
+      });
+      
+      const results = await Promise.all(produtosPromises);
+      return results.filter(item => item.quantidade > 0);
+    }
+  });
+
+  const renderPlaceholderData = () => {
+    return [
+      { categoria: "Carregando...", quantidade: 1, cor: "#CBD5E1" }
+    ];
+  };
+
+  const chartData = isLoading || !distribuicaoCategorias || distribuicaoCategorias.length === 0 
+    ? renderPlaceholderData() 
+    : distribuicaoCategorias;
 
   return (
     <Card className="col-span-1 card-stats">
@@ -18,7 +57,7 @@ const GraficoCategorias: React.FC = () => {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={dadosDashboard.distribuicaoCategorias}
+                data={chartData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -26,12 +65,14 @@ const GraficoCategorias: React.FC = () => {
                 fill="#8884d8"
                 dataKey="quantidade"
                 nameKey="categoria"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => 
+                  isLoading ? "" : `${name}: ${(percent * 100).toFixed(0)}%`
+                }
               >
-                {dadosDashboard.distribuicaoCategorias.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={cores[index % cores.length]} 
+                    fill={entry.cor} 
                   />
                 ))}
               </Pie>

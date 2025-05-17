@@ -2,15 +2,58 @@
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Cell, Legend, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
-import { dadosDashboard } from "@/mockData";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { addDays, isBefore, isAfter } from "date-fns";
 
 const GraficoValidade: React.FC = () => {
-  // Cores para os status
-  const cores = {
-    "Normal": "#10B981", // Verde para normal
-    "Próximo ao Vencimento": "#F59E0B", // Amarelo para próximo ao vencimento
-    "Vencido": "#EF4444" // Vermelho para vencido
+  const { data: distribuicaoValidade, isLoading } = useQuery({
+    queryKey: ['distribuicaoValidade'],
+    queryFn: async () => {
+      // Fetch all produtos with validade
+      const { data, error } = await supabase
+        .from('produtos')
+        .select('validade');
+        
+      if (error) throw error;
+      
+      const today = new Date();
+      const nextWeek = addDays(today, 7);
+      
+      const vencidos = data.filter(item => 
+        item.validade && isBefore(new Date(item.validade), today)
+      ).length;
+      
+      const proximosAoVencimento = data.filter(item => 
+        item.validade && 
+        isAfter(new Date(item.validade), today) && 
+        isBefore(new Date(item.validade), nextWeek)
+      ).length;
+      
+      const normais = data.filter(item => 
+        item.validade && isAfter(new Date(item.validade), nextWeek)
+      ).length;
+      
+      const semData = data.filter(item => !item.validade).length;
+      
+      return [
+        { status: "Normal", quantidade: normais, cor: "#10B981" },
+        { status: "Próximo ao Vencimento", quantidade: proximosAoVencimento, cor: "#F59E0B" },
+        { status: "Vencido", quantidade: vencidos, cor: "#EF4444" },
+        { status: "Sem Data", quantidade: semData, cor: "#9CA3AF" }
+      ].filter(item => item.quantidade > 0);
+    }
+  });
+
+  const renderPlaceholderData = () => {
+    return [
+      { status: "Carregando...", quantidade: 1, cor: "#CBD5E1" }
+    ];
   };
+
+  const chartData = isLoading || !distribuicaoValidade || distribuicaoValidade.length === 0 
+    ? renderPlaceholderData() 
+    : distribuicaoValidade;
 
   return (
     <Card className="col-span-1 card-stats">
@@ -22,7 +65,7 @@ const GraficoValidade: React.FC = () => {
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
-                data={dadosDashboard.distribuicaoValidade}
+                data={chartData}
                 cx="50%"
                 cy="50%"
                 labelLine={false}
@@ -30,16 +73,14 @@ const GraficoValidade: React.FC = () => {
                 fill="#8884d8"
                 dataKey="quantidade"
                 nameKey="status"
-                label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                label={({ name, percent }) => 
+                  isLoading ? "" : `${name}: ${(percent * 100).toFixed(0)}%`
+                }
               >
-                {dadosDashboard.distribuicaoValidade.map((entry, index) => (
+                {chartData.map((entry, index) => (
                   <Cell 
                     key={`cell-${index}`} 
-                    fill={entry.status === "Normal" 
-                      ? cores["Normal"] 
-                      : entry.status === "Próximo ao Vencimento" 
-                        ? cores["Próximo ao Vencimento"] 
-                        : cores["Vencido"]} 
+                    fill={entry.cor} 
                   />
                 ))}
               </Pie>
