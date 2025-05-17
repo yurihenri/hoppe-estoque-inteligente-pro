@@ -45,3 +45,36 @@ export const ProductBadge: React.FC<ProductBadgeProps> = ({ validityDate }) => {
     </Badge>
   );
 };
+
+// Adicionando componente de badge para nível de estoque
+interface StockBadgeProps {
+  quantity: number;
+  lowThreshold?: number;
+  mediumThreshold?: number;
+}
+
+export const StockBadge: React.FC<StockBadgeProps> = ({ 
+  quantity, 
+  lowThreshold = 5, 
+  mediumThreshold = 20 
+}) => {
+  if (quantity <= lowThreshold) {
+    return (
+      <Badge className="bg-erro-100 text-erro-700 border-erro-200 hover:bg-erro-200">
+        Estoque Baixo
+      </Badge>
+    );
+  } else if (quantity <= mediumThreshold) {
+    return (
+      <Badge className="bg-alerta-100 text-alerta-700 border-alerta-200 hover:bg-alerta-200">
+        Estoque Médio
+      </Badge>
+    );
+  } else {
+    return (
+      <Badge className="bg-sucesso-100 text-sucesso-700 border-sucesso-200 hover:bg-sucesso-200">
+        Estoque Alto
+      </Badge>
+    );
+  }
+};

@@ -39,10 +39,22 @@ const Dashboard: React.FC = () => {
         isBefore(new Date(produto.validade), nextWeek)
       ).length;
       
+      // Calcular produtos com estoque baixo (menos de 5 unidades)
+      const produtosEstoqueBaixo = produtos.filter(produto => 
+        produto.quantidade <= 5
+      ).length;
+      
+      // Calcular produtos sem categoria
+      const produtosSemCategoria = produtos.filter(produto => 
+        !produto.categoria_id
+      ).length;
+      
       return {
         totalProdutos,
         produtosVencidos,
-        produtosAVencer
+        produtosAVencer,
+        produtosEstoqueBaixo,
+        produtosSemCategoria
       };
     },
     refetchOnWindowFocus: false
