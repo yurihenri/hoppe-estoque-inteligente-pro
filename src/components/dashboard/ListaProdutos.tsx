@@ -81,7 +81,7 @@ export const ListaProdutos: React.FC = () => {
     produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
     produto.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     produto.categoria?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    produto.codigo_rastreio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    produto.codigoRastreio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     (produto.validade && format(new Date(produto.validade), 'dd/MM/yyyy').includes(searchTerm))
   ) || [];
 
