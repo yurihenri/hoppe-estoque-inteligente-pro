@@ -32,15 +32,10 @@ const ListaAlertas: React.FC = () => {
         
       if (error) throw error;
       
-      // Normalize and filter produtos
-      const produtos = produtosData.map((produto) => {
-        const normalizedProduto = normalizeProduto(produto);
-        return {
-          ...normalizedProduto,
-          categoria: produto.categorias,
-        };
-      });
+      // Normalize produtos - the normalization function now handles joined categoria data
+      const produtos = produtosData.map(produto => normalizeProduto(produto));
       
+      // Filter produtos
       const alertasProdutos = produtos.filter(produto => {
         if (!produto.validade) return false;
         const validadeDate = new Date(produto.validade);
@@ -51,7 +46,7 @@ const ListaAlertas: React.FC = () => {
     }
   });
 
-  const renderAlertaItem = (produto: Produto & { categoria?: any }) => {
+  const renderAlertaItem = (produto: Produto) => {
     const validadeDate = produto.validade ? new Date(produto.validade) : null;
     const isVencido = validadeDate && isBefore(validadeDate, new Date());
     

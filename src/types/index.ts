@@ -52,7 +52,14 @@ export interface Produto {
   validade?: string; // ISO date string
   dataEntrada: string; // ISO date string
   codigoRastreio?: string;
-  categoria?: Categoria; // Add this property for the joined category data
+  categoria?: Categoria | CategoriaSimples; // Allow either full Category or simplified category from join
+}
+
+// Interface for simplified category data received from join queries
+export interface CategoriaSimples {
+  id: string;
+  nome: string;
+  cor: string;
 }
 
 export interface Lote {
