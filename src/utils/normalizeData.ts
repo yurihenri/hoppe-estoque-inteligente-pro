@@ -26,6 +26,8 @@ export const normalizeProduto = (data: any): Produto => ({
   validade: data.validade ? data.validade : undefined,
   dataEntrada: data.data_entrada || new Date().toISOString(),
   codigoRastreio: data.codigo_rastreio || undefined,
+  // Add categoria if it exists in the joined data
+  categoria: data.categorias ? normalizeCategoria(data.categorias) : undefined,
 });
 
 export const normalizeUsuario = (data: any): Usuario => ({

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
@@ -15,6 +14,7 @@ import RelatorioVencimentos from '@/components/relatorios/RelatorioVencimentos';
 import RelatorioGiroEstoque from '@/components/relatorios/RelatorioGiroEstoque';
 import RelatorioFinanceiro from '@/components/relatorios/RelatorioFinanceiro';
 import { Produto, Categoria } from '@/types';
+import { normalizeCategoria, normalizeProduto } from '@/utils/normalizeData';
 
 // Tipos para os dados de relatório
 interface DadosVencimento {
@@ -64,19 +64,8 @@ const Relatorios = () => {
         if (categoriasError) throw categoriasError;
 
         // Processar produtos e gerar dados para gráficos
-        const produtosNormalizados = produtosData.map(p => ({
-          id: p.id,
-          nome: p.nome,
-          descricao: p.descricao,
-          codigoRastreio: p.codigo_rastreio,
-          preco: p.preco,
-          categoriaId: p.categoria_id,
-          empresaId: p.empresa_id,
-          estoqueAtual: p.quantidade,
-          validade: p.validade,
-          dataEntrada: p.data_entrada,
-          categoria: p.categorias
-        }));
+        const produtosNormalizados = produtosData.map(normalizeProduto);
+        const categoriasNormalizadas = categoriasData.map(normalizeCategoria);
 
         // Calcular vencimentos para diferentes períodos
         const hoje = new Date();
@@ -107,7 +96,7 @@ const Relatorios = () => {
 
         // Atualizar estados
         setProdutos(produtosNormalizados);
-        setCategorias(categoriasData);
+        setCategorias(categoriasNormalizadas);
         setDadosVencimento([
           { periodo: '7 dias', quantidade: vencemEm7Dias },
           { periodo: '15 dias', quantidade: vencemEm15Dias },

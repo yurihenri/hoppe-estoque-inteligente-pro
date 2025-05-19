@@ -52,6 +52,7 @@ export interface Produto {
   validade?: string; // ISO date string
   dataEntrada: string; // ISO date string
   codigoRastreio?: string;
+  categoria?: Categoria; // Add this property for the joined category data
 }
 
 export interface Lote {
