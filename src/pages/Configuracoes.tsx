@@ -1,11 +1,48 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { User } from '@supabase/supabase-js';
+
+// Import our new components
+import ProfileSettings from '@/components/configuracoes/ProfileSettings';
+import NotificationSettings from '@/components/configuracoes/NotificationSettings';
+import SystemSettings from '@/components/configuracoes/SystemSettings';
+import SecuritySettings from '@/components/configuracoes/SecuritySettings';
 
 const Configuracoes = () => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true);
+  
+  // Load user data on component mount
+  useEffect(() => {
+    const fetchCurrentUser = async () => {
+      try {
+        setLoading(true);
+        const { data: { user } } = await supabase.auth.getUser();
+        setUser(user);
+      } catch (error) {
+        console.error('Erro ao carregar usuário:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCurrentUser();
+  }, []);
+  
+  // Apply saved theme on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <Layout title="Configurações">
       <div className="container mx-auto py-6">
@@ -24,36 +61,35 @@ const Configuracoes = () => {
                 <TabsTrigger value="perfil">Perfil</TabsTrigger>
                 <TabsTrigger value="notificacoes">Notificações</TabsTrigger>
                 <TabsTrigger value="sistema">Sistema</TabsTrigger>
+                <TabsTrigger value="seguranca">Segurança</TabsTrigger>
               </TabsList>
               
               <TabsContent value="perfil" className="space-y-4">
-                <div className="p-4 bg-muted rounded-md">
-                  <p className="text-center">Configurações de perfil em desenvolvimento</p>
-                  <p className="text-center text-sm text-muted-foreground mt-2">
-                    Esta seção permitirá editar suas informações de perfil
-                    e preferências de usuário.
-                  </p>
-                </div>
+                {loading ? (
+                  <div className="p-4 bg-muted rounded-md">
+                    <p className="text-center">Carregando informações do perfil...</p>
+                  </div>
+                ) : (
+                  <ProfileSettings user={user} />
+                )}
               </TabsContent>
               
               <TabsContent value="notificacoes" className="space-y-4">
-                <div className="p-4 bg-muted rounded-md">
-                  <p className="text-center">Configurações de notificações em desenvolvimento</p>
-                  <p className="text-center text-sm text-muted-foreground mt-2">
-                    Personalize quando e como deseja receber alertas
-                    sobre produtos e estoques.
-                  </p>
-                </div>
+                <NotificationSettings />
               </TabsContent>
               
               <TabsContent value="sistema" className="space-y-4">
-                <div className="p-4 bg-muted rounded-md">
-                  <p className="text-center">Configurações do sistema em desenvolvimento</p>
-                  <p className="text-center text-sm text-muted-foreground mt-2">
-                    Ajuste configurações gerais do sistema e parâmetros
-                    de funcionamento.
-                  </p>
-                </div>
+                <SystemSettings />
+              </TabsContent>
+              
+              <TabsContent value="seguranca" className="space-y-4">
+                {loading ? (
+                  <div className="p-4 bg-muted rounded-md">
+                    <p className="text-center">Carregando informações de segurança...</p>
+                  </div>
+                ) : (
+                  <SecuritySettings user={user} />
+                )}
               </TabsContent>
             </Tabs>
           </CardContent>
