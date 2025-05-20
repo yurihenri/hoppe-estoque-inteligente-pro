@@ -2,6 +2,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, FileDown, FileUp } from 'lucide-react';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger
+} from '@/components/ui/tooltip';
 
 interface ExportButtonProps {
   onExport: () => void;
