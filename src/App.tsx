@@ -17,6 +17,7 @@ import Categorias from "./pages/Categorias";
 import Alertas from "./pages/Alertas";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
+import IntegracaoDados from "./pages/IntegracaoDados";
 
 const queryClient = new QueryClient();
 
@@ -78,6 +79,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Relatorios />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/integracaoDados" 
+              element={
+                <ProtectedRoute>
+                  <IntegracaoDados />
                 </ProtectedRoute>
               } 
             />

@@ -10,7 +10,8 @@ import {
   Settings, 
   LogOut,
   Menu,
-  X
+  X,
+  Database
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -81,6 +82,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         <NavItem to="/categorias" icon={<Tag size={20} />} label="Categorias" expanded={expanded} />
         <NavItem to="/alertas" icon={<Bell size={20} />} label="Alertas" expanded={expanded} />
         <NavItem to="/relatorios" icon={<FileText size={20} />} label="Relatórios" expanded={expanded} />
+        <NavItem to="/integracaoDados" icon={<Database size={20} />} label="Integração de Dados" expanded={expanded} />
         <NavItem to="/configuracoes" icon={<Settings size={20} />} label="Configurações" expanded={expanded} />
       </nav>
 

@@ -1,409 +1,281 @@
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { useState, useEffect } from 'react';
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from '@/components/ui/sonner';
-import { AlertTriangle, Package, Plus, Edit, Trash } from 'lucide-react';
-import { z } from 'zod';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { PlusCircle, Trash2, Bell } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { AlertRule } from '@/types/alertas';
 
-// Define types for alert rules
-type AlertType = 'quantidade' | 'validade';
-type NotificationChannel = 'email' | 'push' | 'in-app';
-type AlertFrequency = 'imediato' | 'diario' | 'semanal';
+export const getRules = (): AlertRule[] => {
+  const savedRules = localStorage.getItem('alertRules');
+  return savedRules ? JSON.parse(savedRules) : [];
+};
 
-interface AlertRule {
-  id: string;
-  name: string;
-  type: AlertType;
-  threshold: number;
-  category?: string;
-  channel: NotificationChannel;
-  frequency: AlertFrequency;
-  active: boolean;
-  createdAt: string;
-}
-
-const AlertRuleSchema = z.object({
-  name: z.string().min(3, { message: "O nome deve ter pelo menos 3 caracteres" }),
-  type: z.enum(['quantidade', 'validade']),
-  threshold: z.number().min(1),
-  category: z.string().optional(),
-  channel: z.enum(['email', 'push', 'in-app']),
-  frequency: z.enum(['imediato', 'diario', 'semanal']),
-  active: z.boolean().default(true),
-});
-
-const AlertRules: React.FC = () => {
+const AlertRules = () => {
   const [rules, setRules] = useState<AlertRule[]>([]);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingRule, setEditingRule] = useState<AlertRule | null>(null);
-
-  const form = useForm<z.infer<typeof AlertRuleSchema>>({
-    resolver: zodResolver(AlertRuleSchema),
-    defaultValues: {
-      name: '',
-      type: 'quantidade',
-      threshold: 10,
-      category: '',
-      channel: 'in-app',
-      frequency: 'imediato',
-      active: true,
-    },
+  const [newRule, setNewRule] = useState<AlertRule>({
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    name: "",
+    type: "quantidade",
+    threshold: 10,
+    category: "",
+    channel: "in-app",
+    frequency: "imediato",
+    active: true
   });
 
-  // Load saved rules from localStorage
+  // Carregar regras salvas ao iniciar
   useEffect(() => {
-    const savedRules = localStorage.getItem('alertRules');
-    if (savedRules) {
-      try {
-        setRules(JSON.parse(savedRules));
-      } catch (error) {
-        console.error('Error parsing saved rules:', error);
-      }
-    }
+    setRules(getRules());
   }, []);
 
-  // Save rules to localStorage whenever they change
+  // Salvar regras no localStorage quando atualizadas
   useEffect(() => {
-    if (rules.length > 0) {
-      localStorage.setItem('alertRules', JSON.stringify(rules));
-    }
+    localStorage.setItem('alertRules', JSON.stringify(rules));
   }, [rules]);
 
-  const openNewRuleDialog = () => {
-    form.reset({
-      name: '',
-      type: 'quantidade',
+  // Resetar formulário
+  const resetForm = () => {
+    setNewRule({
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+      name: "",
+      type: "quantidade",
       threshold: 10,
-      category: '',
-      channel: 'in-app',
-      frequency: 'imediato',
-      active: true,
+      category: "",
+      channel: "in-app",
+      frequency: "imediato",
+      active: true
     });
-    setEditingRule(null);
-    setDialogOpen(true);
   };
 
-  const openEditRuleDialog = (rule: AlertRule) => {
-    form.reset({
-      name: rule.name,
-      type: rule.type,
-      threshold: rule.threshold,
-      category: rule.category || '',
-      channel: rule.channel,
-      frequency: rule.frequency,
-      active: rule.active,
-    });
-    setEditingRule(rule);
-    setDialogOpen(true);
-  };
-
-  const deleteRule = (id: string) => {
-    if (confirm('Tem certeza que deseja excluir esta regra?')) {
-      setRules(prevRules => prevRules.filter(rule => rule.id !== id));
-      toast.success('Regra excluída com sucesso');
+  // Adicionar nova regra
+  const handleAddRule = () => {
+    if (!newRule.name) {
+      toast.error("Por favor, defina um nome para a regra");
+      return;
     }
+    
+    setRules([...rules, newRule]);
+    resetForm();
+    toast.success("Regra de alerta criada com sucesso");
   };
 
-  const toggleRuleActive = (id: string, active: boolean) => {
-    setRules(prevRules => 
-      prevRules.map(rule => 
-        rule.id === id ? { ...rule, active } : rule
-      )
-    );
-    toast.success(`Regra ${active ? 'ativada' : 'desativada'} com sucesso`);
+  // Remover uma regra
+  const handleRemoveRule = (id: string) => {
+    setRules(rules.filter(rule => rule.id !== id));
+    toast.info("Regra removida");
   };
 
-  const onSubmit = (data: z.infer<typeof AlertRuleSchema>) => {
-    if (editingRule) {
-      // Update existing rule
-      setRules(prevRules => 
-        prevRules.map(rule => 
-          rule.id === editingRule.id ? { ...rule, ...data } : rule
-        )
-      );
-      toast.success('Regra atualizada com sucesso');
-    } else {
-      // Create new rule
-      const newRule: AlertRule = {
-        ...data,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-      };
-      setRules(prevRules => [...prevRules, newRule]);
-      toast.success('Nova regra criada com sucesso');
-    }
-    setDialogOpen(false);
+  // Toggle ativo/inativo
+  const toggleRuleActive = (id: string) => {
+    setRules(rules.map(rule => 
+      rule.id === id 
+        ? { ...rule, active: !rule.active } 
+        : rule
+    ));
   };
 
   return (
-    <>
-      <div className="flex justify-between items-center mb-4">
-        <h3 className="text-lg font-semibold">Gerenciamento de Regras</h3>
-        <Button onClick={openNewRuleDialog} className="flex items-center gap-2">
-          <Plus size={16} />
-          Nova Regra
-        </Button>
-      </div>
-
-      <Card>
-        <CardContent className="p-6">
-          {rules.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p className="mb-4">Nenhuma regra configurada. Crie uma nova regra para começar.</p>
-              <Button onClick={openNewRuleDialog} variant="outline" className="flex mx-auto items-center gap-2">
-                <Plus size={16} />
-                Criar Primeira Regra
-              </Button>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[200px]">Nome</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Condição</TableHead>
-                  <TableHead>Notificação</TableHead>
-                  <TableHead>Frequência</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rules.map((rule) => (
-                  <TableRow key={rule.id}>
-                    <TableCell className="font-medium">{rule.name}</TableCell>
-                    <TableCell>
-                      <span className="flex items-center gap-2">
-                        {rule.type === 'quantidade' ? (
-                          <Package size={16} className="text-hoppe-500" />
-                        ) : (
-                          <AlertTriangle size={16} className="text-alerta-500" />
-                        )}
-                        {rule.type === 'quantidade' ? 'Estoque' : 'Validade'}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      {rule.type === 'quantidade' 
-                        ? `Menos de ${rule.threshold} unidades` 
-                        : `${rule.threshold} dias para vencer`}
-                    </TableCell>
-                    <TableCell>{
-                      {
-                        'email': 'E-mail',
-                        'push': 'Push',
-                        'in-app': 'No aplicativo'
-                      }[rule.channel]
-                    }</TableCell>
-                    <TableCell>{
-                      {
-                        'imediato': 'Imediato',
-                        'diario': 'Diário',
-                        'semanal': 'Semanal'
-                      }[rule.frequency]
-                    }</TableCell>
-                    <TableCell>
-                      <Switch 
-                        checked={rule.active} 
-                        onCheckedChange={(checked) => toggleRuleActive(rule.id, checked)}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => openEditRuleDialog(rule)}
-                        >
-                          <Edit size={16} />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon"
-                          onClick={() => deleteRule(rule.id)}
-                        >
-                          <Trash size={16} />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
-
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>{editingRule ? 'Editar Regra' : 'Nova Regra de Alerta'}</DialogTitle>
-          </DialogHeader>
-          
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome da Regra</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Alerta de estoque baixo" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Regras de Alertas</h2>
+          <p className="text-sm text-muted-foreground">Configure condições para receber alertas automáticos</p>
+        </div>
+        
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Nova Regra
+            </Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Criar Nova Regra de Alerta</DialogTitle>
+            </DialogHeader>
+            
+            <div className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome da Regra</Label>
+                <Input 
+                  id="name" 
+                  value={newRule.name}
+                  onChange={(e) => setNewRule({...newRule, name: e.target.value})}
+                  placeholder="Ex: Estoque Baixo de Medicamentos" 
+                />
+              </div>
               
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="type"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Tipo de Alerta</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o tipo" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="quantidade">Quantidade em estoque</SelectItem>
-                          <SelectItem value="validade">Dias para vencimento</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="threshold"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Limite</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="number" 
-                          placeholder={form.watch('type') === 'quantidade' ? "Unidades" : "Dias"} 
-                          {...field}
-                          onChange={e => field.onChange(parseInt(e.target.value))}
-                        />
-                      </FormControl>
-                      <FormDescription>
-                        {form.watch('type') === 'quantidade' 
-                          ? "Alerta quando o estoque for menor que este valor" 
-                          : "Alerta quando faltar esta quantidade de dias para o vencimento"}
-                      </FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
+                <div className="space-y-2">
+                  <Label htmlFor="type">Tipo de Alerta</Label>
+                  <Select 
+                    value={newRule.type} 
+                    onValueChange={(value: "quantidade" | "validade") => 
+                      setNewRule({...newRule, type: value})
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="quantidade">Quantidade Mínima</SelectItem>
+                      <SelectItem value="validade">Validade</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="threshold">
+                    {newRule.type === "quantidade" 
+                      ? "Quantidade Mínima" 
+                      : "Dias até Vencimento"}
+                  </Label>
+                  <Input 
+                    id="threshold"
+                    type="number" 
+                    min={1}
+                    value={newRule.threshold}
+                    onChange={(e) => setNewRule({...newRule, threshold: Number(e.target.value)})}
+                  />
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria (opcional)</Label>
+                <Input 
+                  id="category"
+                  value={newRule.category}
+                  onChange={(e) => setNewRule({...newRule, category: e.target.value})}
+                  placeholder="Deixe em branco para todas as categorias" 
                 />
               </div>
-
+              
               <div className="grid grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="channel"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Canal de Notificação</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione o canal" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="email">E-mail</SelectItem>
-                          <SelectItem value="push">Push Notification</SelectItem>
-                          <SelectItem value="in-app">No aplicativo</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="frequency"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Frequência</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a frequência" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="imediato">Imediato</SelectItem>
-                          <SelectItem value="diario">Diário</SelectItem>
-                          <SelectItem value="semanal">Semanal</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="channel">Canal de Notificação</Label>
+                  <Select 
+                    value={newRule.channel} 
+                    onValueChange={(value: "email" | "push" | "in-app") => 
+                      setNewRule({...newRule, channel: value})
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="email">Email</SelectItem>
+                      <SelectItem value="push">Push Notification</SelectItem>
+                      <SelectItem value="in-app">No Aplicativo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="frequency">Frequência</Label>
+                  <Select 
+                    value={newRule.frequency} 
+                    onValueChange={(value: "imediato" | "diario" | "semanal") => 
+                      setNewRule({...newRule, frequency: value})
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="imediato">Imediato</SelectItem>
+                      <SelectItem value="diario">Diário</SelectItem>
+                      <SelectItem value="semanal">Semanal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+            </div>
+            
+            <DialogFooter>
+              <Button variant="outline" onClick={resetForm}>Limpar</Button>
+              <Button onClick={handleAddRule}>Criar Regra</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
 
-              <FormField
-                control={form.control}
-                name="active"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Ativo</FormLabel>
-                      <FormDescription>
-                        Ativar ou desativar esta regra de alerta
-                      </FormDescription>
+      {rules.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center p-10 text-center">
+            <Bell className="h-10 w-10 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium">Nenhuma regra configurada</h3>
+            <p className="text-sm text-muted-foreground mt-2 mb-6">
+              Configure regras para receber alertas automáticos sobre seu estoque
+            </p>
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Criar primeira regra
+              </Button>
+            </DialogTrigger>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="grid gap-4">
+          {rules.map((rule) => (
+            <Card key={rule.id} className={!rule.active ? "opacity-70" : undefined}>
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <div className={`w-3 h-3 rounded-full mr-3 ${rule.active ? 'bg-green-500' : 'bg-gray-400'}`}></div>
+                    <div>
+                      <h3 className="font-medium">{rule.name}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        {rule.type === "quantidade" 
+                          ? `Alerta quando quantidade < ${rule.threshold}`
+                          : `Alerta quando faltarem ${rule.threshold} dias para vencer`}
+                        {rule.category && ` • Categoria: ${rule.category}`}
+                      </p>
                     </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={() => setDialogOpen(false)}>
-                  Cancelar
-                </Button>
-                <Button type="submit">
-                  {editingRule ? 'Atualizar' : 'Criar'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </DialogContent>
-      </Dialog>
-    </>
+                  </div>
+                  
+                  <div className="flex items-center gap-2">
+                    <Switch 
+                      checked={rule.active} 
+                      onCheckedChange={() => toggleRuleActive(rule.id)} 
+                    />
+                    <Button variant="ghost" size="icon" onClick={() => handleRemoveRule(rule.id)}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                <Separator className="my-3" />
+                
+                <div className="flex justify-between text-sm">
+                  <span>
+                    Notificação: <span className="font-medium">
+                      {rule.channel === "email" ? "Email" : 
+                       rule.channel === "push" ? "Push" : "No App"}
+                    </span>
+                  </span>
+                  <span>
+                    Frequência: <span className="font-medium">
+                      {rule.frequency === "imediato" ? "Imediata" : 
+                       rule.frequency === "diario" ? "Diária" : "Semanal"}
+                    </span>
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+    </div>
   );
 };
 
