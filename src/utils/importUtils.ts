@@ -165,8 +165,8 @@ export const mapImportedToProducts = async (
       preco: preco,
       categoriaId: categoriaId || existingProduct?.categoria_id,
       empresaId,
-      unidade: existingProduct?.unidade || 'un',
-      estoqueMinimo: existingProduct?.estoque_minimo || 5,
+      unidade: 'un', // Default value since unidade column doesn't exist in database
+      estoqueMinimo: 5, // Default value since estoque_minimo column doesn't exist in database
       estoqueAtual,
       validade,
       dataEntrada: existingProduct?.data_entrada || new Date().toISOString(),
@@ -188,8 +188,6 @@ export const importProdutos = async (produtos: Produto[]): Promise<boolean> => {
         preco: p.preco,
         categoria_id: p.categoriaId,
         empresa_id: p.empresaId,
-        unidade: p.unidade,
-        estoque_minimo: p.estoqueMinimo,
         quantidade: p.estoqueAtual,
         validade: p.validade,
         data_entrada: p.dataEntrada,
