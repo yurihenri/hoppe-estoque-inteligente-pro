@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { 
   BarChart, 
   Package, 
@@ -25,6 +25,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   const { user, logout } = useAuth();
   const [expanded, setExpanded] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   const toggleSidebar = () => {
     setExpanded(!expanded);
@@ -38,30 +39,30 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
   return (
     <aside
       className={cn(
-        "flex flex-col h-screen border-r border-border bg-card transition-all duration-300",
+        "flex flex-col h-screen bg-[#0B1220] text-white transition-all duration-300",
         expanded ? "w-64" : "w-20",
         className
       )}
     >
-      <div className="flex items-center justify-between p-4 border-b border-border">
+      <div className="flex items-center justify-between p-4 border-b border-blue-900">
         {expanded ? (
-          <h1 className="text-xl font-bold text-hoppe-700">Hoppe</h1>
+          <h1 className="text-xl font-bold text-white">Hoppe</h1>
         ) : (
-          <h1 className="text-xl font-bold text-hoppe-700">H</h1>
+          <h1 className="text-xl font-bold text-white">H</h1>
         )}
         <Button
           variant="ghost"
           size="icon"
           onClick={toggleSidebar}
-          className="ml-auto"
+          className="ml-auto text-white hover:bg-blue-900/50"
         >
           {expanded ? <X size={20} /> : <Menu size={20} />}
         </Button>
       </div>
 
       {/* Usuário logado */}
-      <div className="flex items-center p-4 border-b border-border">
-        <div className="h-10 w-10 rounded-full bg-hoppe-200 flex items-center justify-center text-hoppe-700 font-semibold">
+      <div className="flex items-center p-4 border-b border-blue-900">
+        <div className="h-10 w-10 rounded-full bg-blue-700/30 flex items-center justify-center text-white font-semibold">
           {user?.nome 
             ? user.nome.substring(0, 2).toUpperCase() 
             : user?.email?.substring(0, 2).toUpperCase() || "??"
@@ -70,7 +71,7 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
         {expanded && (
           <div className="ml-3 overflow-hidden">
             <p className="font-medium text-sm truncate">{user?.nome || user?.email}</p>
-            <p className="text-xs text-muted-foreground truncate">{user?.cargo || "Usuário"}</p>
+            <p className="text-xs text-blue-200/70 truncate">{user?.cargo || "Usuário"}</p>
           </div>
         )}
       </div>
@@ -87,8 +88,13 @@ const Sidebar: React.FC<SidebarProps> = ({ className }) => {
       </nav>
 
       {/* Rodapé */}
-      <div className="p-2 mt-auto border-t border-border">
-        <Button variant="ghost" className="w-full justify-start" size="sm" onClick={handleLogout}>
+      <div className="p-2 mt-auto border-t border-blue-900">
+        <Button 
+          variant="ghost" 
+          className="w-full justify-start text-white hover:bg-blue-900/50" 
+          size="sm" 
+          onClick={handleLogout}
+        >
           <LogOut size={20} className="mr-2" />
           {expanded && <span>Sair</span>}
         </Button>
@@ -105,12 +111,17 @@ interface NavItemProps {
 }
 
 const NavItem: React.FC<NavItemProps> = ({ to, icon, label, expanded }) => {
+  const location = useLocation();
+  const isActive = location.pathname === to;
+
   return (
     <Link
       to={to}
       className={cn(
-        "flex items-center px-3 py-2 rounded-md text-foreground hover:bg-hoppe-50 hover:text-hoppe-700",
-        to === window.location.pathname && "bg-hoppe-50 text-hoppe-700"
+        "flex items-center px-3 py-2.5 rounded-md text-white transition-colors",
+        isActive 
+          ? "bg-blue-700 text-white font-medium" 
+          : "hover:bg-blue-900/50"
       )}
     >
       <span className="mr-3">{icon}</span>
