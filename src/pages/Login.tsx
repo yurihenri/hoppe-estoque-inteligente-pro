@@ -1,6 +1,6 @@
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -17,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
 import { Credentials } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 
 const loginSchema = z.object({
   email: z.string()
@@ -29,9 +29,10 @@ const loginSchema = z.object({
 });
 
 const Login = () => {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, error, clearError, user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
@@ -45,7 +46,35 @@ const Login = () => {
     mode: 'onChange',
   });
 
-  // Watch form values to enable/disable submit button
+  // Redireciona se já estiver logado
+  useEffect(() => {
+    if (user) {
+      const from = location.state?.from?.pathname || '/dashboard';
+      navigate(from, { replace: true });
+    }
+  }, [user, navigate, location]);
+
+  // Limpa erros quando o componente monta
+  useEffect(() => {
+    clearError();
+  }, [clearError]);
+
+  // Limpa erros quando o usuário começa a digitar
+  useEffect(() => {
+    if (error) {
+      clearError();
+    }
+  }, [watch('email'), watch('password'), error, clearError]);
+
+  // Carrega preferência de "lembrar de mim"
+  useEffect(() => {
+    const savedRememberMe = localStorage.getItem('hoppe_remember_me');
+    if (savedRememberMe === 'true') {
+      setRememberMe(true);
+    }
+  }, []);
+
+  // Observa valores do formulário para habilitar/desabilitar botão
   const watchedFields = watch();
   const isFormValid = isValid && isDirty && watchedFields.email && watchedFields.password;
 
@@ -53,7 +82,7 @@ const Login = () => {
     try {
       await login(data.email, data.password);
       
-      // Store remember me preference
+      // Salva preferência de "lembrar de mim"
       if (rememberMe) {
         localStorage.setItem('hoppe_remember_me', 'true');
       } else {
@@ -66,32 +95,11 @@ const Login = () => {
         variant: "default",
       });
       
-      // Navigate to dashboard after successful login
-      navigate('/dashboard');
+      // Navegação será tratada pelo useEffect acima
       
     } catch (error: any) {
+      // O erro já foi tratado no AuthContext
       console.error('Login error:', error);
-      
-      // Provide user-friendly error messages
-      let errorMessage = "Erro ao fazer login. Tente novamente.";
-      
-      if (error?.message) {
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = "Email ou senha incorretos. Verifique suas credenciais.";
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = "Por favor, confirme seu email antes de fazer login.";
-        } else if (error.message.includes('Too many requests')) {
-          errorMessage = "Muitas tentativas de login. Tente novamente em alguns minutos.";
-        } else if (error.message.includes('network')) {
-          errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
-        }
-      }
-      
-      toast({
-        title: "Erro no login",
-        description: errorMessage,
-        variant: "destructive",
-      });
     }
   };
 
@@ -102,7 +110,7 @@ const Login = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-4">
       <div className="w-full max-w-md">
-        {/* Logo and Brand */}
+        {/* Logo e Marca */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">Hoppe</h1>
           <p className="text-blue-200 text-lg font-medium">Sistema de Gerenciamento de Estoque</p>
@@ -116,7 +124,15 @@ const Login = () => {
           
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-6">
-              {/* Email Field */}
+              {/* Exibe erro de autenticação */}
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3 flex items-center space-x-2">
+                  <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
+                  <p className="text-red-200 text-sm">{error}</p>
+                </div>
+              )}
+
+              {/* Campo Email */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-white font-medium">Email</Label>
                 <div className="relative">
@@ -127,16 +143,18 @@ const Login = () => {
                     placeholder="seu@email.com"
                     className="pl-10 bg-white/10 border-white/30 text-white placeholder-blue-200 focus:border-blue-400 focus:ring-blue-400"
                     {...register('email')}
+                    disabled={isLoading}
                   />
                 </div>
                 {errors.email && (
                   <p className="text-red-300 text-sm flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
                     {errors.email.message}
                   </p>
                 )}
               </div>
               
-              {/* Password Field */}
+              {/* Campo Senha */}
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-white font-medium">Senha</Label>
                 <div className="relative">
@@ -147,6 +165,7 @@ const Login = () => {
                     placeholder="••••••••"
                     className="pl-10 pr-10 bg-white/10 border-white/30 text-white placeholder-blue-200 focus:border-blue-400 focus:ring-blue-400"
                     {...register('password')}
+                    disabled={isLoading}
                   />
                   <Button
                     type="button"
@@ -155,18 +174,20 @@ const Login = () => {
                     className="absolute right-0 top-0 h-full px-3 text-blue-300 hover:text-white hover:bg-transparent"
                     onClick={togglePasswordVisibility}
                     tabIndex={-1}
+                    disabled={isLoading}
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
                 {errors.password && (
                   <p className="text-red-300 text-sm flex items-center">
+                    <AlertCircle className="h-4 w-4 mr-1" />
                     {errors.password.message}
                   </p>
                 )}
               </div>
 
-              {/* Remember Me Checkbox */}
+              {/* Checkbox Lembrar de mim */}
               <div className="flex items-center space-x-2">
                 <input
                   id="remember"
@@ -174,6 +195,7 @@ const Login = () => {
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                   className="w-4 h-4 text-blue-600 bg-transparent border-white/30 rounded focus:ring-blue-500 focus:ring-2"
+                  disabled={isLoading}
                 />
                 <Label htmlFor="remember" className="text-blue-200 text-sm cursor-pointer">
                   Lembrar de mim
@@ -212,7 +234,7 @@ const Login = () => {
           </form>
         </Card>
         
-        {/* Footer */}
+        {/* Rodapé */}
         <div className="text-center mt-6">
           <p className="text-blue-300 text-xs">
             © 2024 Hoppe. Sistema seguro e confiável para gestão de estoque.

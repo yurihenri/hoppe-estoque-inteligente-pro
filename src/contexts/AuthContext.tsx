@@ -13,6 +13,7 @@ interface AuthContextType extends AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, nome: string, empresa: string) => Promise<void>;
   logout: () => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,7 +25,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     error: null,
   });
 
+  const clearError = () => {
+    setAuthState(prev => ({ ...prev, error: null }));
+  };
+
   useEffect(() => {
+    let isMounted = true;
+
     const fetchUserProfile = async (userId: string) => {
       try {
         const { data, error } = await supabase
@@ -40,8 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         if (error) throw error;
 
-        if (data) {
-          // Convert Supabase data format to our app's Usuario type
+        if (data && isMounted) {
           const userData: Usuario = {
             id: data.id,
             nome: data.nome,
@@ -62,18 +68,24 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
-        setAuthState(prev => ({ ...prev, error: 'Erro ao carregar perfil do usuário' }));
+        if (isMounted) {
+          setAuthState(prev => ({ ...prev, error: 'Erro ao carregar perfil do usuário' }));
+        }
       }
     };
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (!isMounted) return;
+
+      console.log('Auth state changed:', event, session?.user?.id);
+
       if (event === 'SIGNED_IN' && session?.user) {
-        setAuthState(prev => ({ ...prev, isLoading: true }));
+        setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
         await fetchUserProfile(session.user.id);
+        setAuthState(prev => ({ ...prev, isLoading: false }));
       } else if (event === 'SIGNED_OUT') {
-        setAuthState(prev => ({ ...prev, user: null, error: null }));
+        setAuthState(prev => ({ ...prev, user: null, error: null, isLoading: false }));
       }
-      setAuthState(prev => ({ ...prev, isLoading: false }));
     });
 
     // Check initial session
@@ -83,20 +95,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         
         if (error) throw error;
         
-        if (session?.user) {
+        if (session?.user && isMounted) {
+          setAuthState(prev => ({ ...prev, isLoading: true }));
           await fetchUserProfile(session.user.id);
         }
       } catch (error) {
         console.error("Error checking user session:", error);
-        setAuthState(prev => ({ ...prev, error: 'Erro ao verificar sessão' }));
+        if (isMounted) {
+          setAuthState(prev => ({ ...prev, error: 'Erro ao verificar sessão' }));
+        }
       } finally {
-        setAuthState(prev => ({ ...prev, isLoading: false }));
+        if (isMounted) {
+          setAuthState(prev => ({ ...prev, isLoading: false }));
+        }
       }
     };
 
     checkUser();
 
     return () => {
+      isMounted = false;
       subscription.unsubscribe();
     };
   }, []);
@@ -105,17 +123,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
         password,
       });
       
       if (error) throw error;
       
+      // The auth state change will handle the rest
     } catch (error: any) {
       console.error('Login error:', error);
-      setAuthState(prev => ({ ...prev, error: error.message, isLoading: false }));
-      throw error; // Re-throw so the component can handle it
+      let errorMessage = "Erro ao fazer login. Tente novamente.";
+      
+      if (error?.message) {
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = "Email ou senha incorretos.";
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = "Por favor, confirme seu email antes de fazer login.";
+        } else if (error.message.includes('Too many requests')) {
+          errorMessage = "Muitas tentativas. Tente novamente em alguns minutos.";
+        }
+      }
+      
+      setAuthState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+      throw error;
     }
   };
 
@@ -124,12 +155,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim(),
         password,
         options: {
           data: {
-            nome,
-            empresa,
+            nome: nome.trim(),
+            empresa: empresa.trim(),
           },
         },
       });
@@ -138,8 +169,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
     } catch (error: any) {
       console.error('Register error:', error);
-      setAuthState(prev => ({ ...prev, error: error.message, isLoading: false }));
-      throw error; // Re-throw so the component can handle it
+      let errorMessage = "Erro ao criar conta. Tente novamente.";
+      
+      if (error?.message) {
+        if (error.message.includes('already registered')) {
+          errorMessage = "Este email já está cadastrado.";
+        }
+      }
+      
+      setAuthState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
+      throw error;
     }
   };
 
@@ -147,7 +186,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      // Clear remember me preference
       localStorage.removeItem('hoppe_remember_me');
       
       const { error } = await supabase.auth.signOut();
@@ -156,7 +194,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
     } catch (error: any) {
       console.error('Logout error:', error);
-      setAuthState(prev => ({ ...prev, error: error.message }));
+      setAuthState(prev => ({ ...prev, error: 'Erro ao fazer logout' }));
       throw error;
     } finally {
       setAuthState(prev => ({ ...prev, isLoading: false }));
@@ -170,6 +208,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         login,
         register,
         logout,
+        clearError,
       }}
     >
       {children}
