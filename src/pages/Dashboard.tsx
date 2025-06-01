@@ -6,59 +6,97 @@ import GraficoCategorias from "@/components/dashboard/GraficoCategorias";
 import GraficoValidade from "@/components/dashboard/GraficoValidade";
 import ListaAlertas from "@/components/dashboard/ListaAlertas";
 import { ListaProdutos } from "@/components/dashboard/ListaProdutos";
-import { Package, AlertTriangle, Trash2 } from "lucide-react";
+import { Package, AlertTriangle, Trash2, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter } from "date-fns";
+import { Button } from "@/components/ui/button";
 
 const Dashboard: React.FC = () => {
-  // Fetch dashboard statistics
-  const { data: dashboardStats, isLoading } = useQuery({
+  // Fetch dashboard statistics with better error handling
+  const { data: dashboardStats, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
+      console.log('Fetching dashboard statistics...');
+      
       // Fetch all products
       const { data: produtos, error } = await supabase
         .from('produtos')
         .select('*');
       
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching produtos:', error);
+        throw error;
+      }
+      
+      console.log('Products loaded:', produtos?.length || 0);
       
       const today = new Date();
       const nextWeek = addDays(today, 7);
       
       // Calculate statistics
-      const totalProdutos = produtos.length;
+      const totalProdutos = produtos?.length || 0;
       
-      const produtosVencidos = produtos.filter(produto => 
+      const produtosVencidos = produtos?.filter(produto => 
         produto.validade && isBefore(new Date(produto.validade), today)
-      ).length;
+      ).length || 0;
       
-      const produtosAVencer = produtos.filter(produto => 
+      const produtosAVencer = produtos?.filter(produto => 
         produto.validade && 
         isAfter(new Date(produto.validade), today) && 
         isBefore(new Date(produto.validade), nextWeek)
-      ).length;
+      ).length || 0;
       
       // Calcular produtos com estoque baixo (menos de 5 unidades)
-      const produtosEstoqueBaixo = produtos.filter(produto => 
+      const produtosEstoqueBaixo = produtos?.filter(produto => 
         produto.quantidade <= 5
-      ).length;
+      ).length || 0;
       
       // Calcular produtos sem categoria
-      const produtosSemCategoria = produtos.filter(produto => 
+      const produtosSemCategoria = produtos?.filter(produto => 
         !produto.categoria_id
-      ).length;
+      ).length || 0;
       
-      return {
+      const stats = {
         totalProdutos,
         produtosVencidos,
         produtosAVencer,
         produtosEstoqueBaixo,
         produtosSemCategoria
       };
+      
+      console.log('Dashboard stats calculated:', stats);
+      return stats;
     },
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
+    retry: 3,
+    retryDelay: 1000,
   });
+
+  // Se há erro no carregamento dos dados
+  if (error && !isLoading) {
+    return (
+      <Layout title="Dashboard">
+        <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              Erro ao Carregar Dashboard
+            </h3>
+            <p className="text-gray-600 mb-4">
+              Não foi possível carregar os dados do painel. Verifique sua conexão e tente novamente.
+            </p>
+            <Button 
+              onClick={() => refetch()}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <RefreshCw size={16} className="mr-2" />
+              Tentar Novamente
+            </Button>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Dashboard">

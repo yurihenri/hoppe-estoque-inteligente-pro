@@ -48,11 +48,12 @@ const Login = () => {
 
   // Redireciona se já estiver logado
   useEffect(() => {
-    if (user) {
+    if (user && !isLoading) {
+      console.log('User authenticated, redirecting...');
       const from = location.state?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
     }
-  }, [user, navigate, location]);
+  }, [user, isLoading, navigate, location]);
 
   // Limpa erros quando o componente monta
   useEffect(() => {
@@ -80,6 +81,7 @@ const Login = () => {
 
   const onSubmit = async (data: Credentials) => {
     try {
+      console.log('Submitting login form...');
       await login(data.email, data.password);
       
       // Salva preferência de "lembrar de mim"
@@ -95,17 +97,29 @@ const Login = () => {
         variant: "default",
       });
       
-      // Navegação será tratada pelo useEffect acima
+      // Navegação será tratada pelo useEffect acima quando user for setado
       
     } catch (error: any) {
+      console.error('Login submission error:', error);
       // O erro já foi tratado no AuthContext
-      console.error('Login error:', error);
     }
   };
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
+
+  // Se o usuário já está logado, mostra loading enquanto redireciona
+  if (user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="h-16 w-16 animate-spin rounded-full border-4 border-t-blue-400 border-blue-200/30"></div>
+          <p className="text-white">Redirecionando...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-4">
