@@ -2,7 +2,6 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Empresa, Usuario } from '@/types';
-import { normalizeUsuario } from '@/utils/normalizeData';
 
 interface AuthState {
   user: Usuario | null;
@@ -59,19 +58,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             } : undefined
           };
           
-          setAuthState(prev => ({ ...prev, user: userData }));
+          setAuthState(prev => ({ ...prev, user: userData, error: null }));
         }
       } catch (error) {
         console.error("Error fetching user profile:", error);
+        setAuthState(prev => ({ ...prev, error: 'Erro ao carregar perfil do usuário' }));
       }
     };
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        fetchUserProfile(session.user.id);
+        setAuthState(prev => ({ ...prev, isLoading: true }));
+        await fetchUserProfile(session.user.id);
       } else if (event === 'SIGNED_OUT') {
-        setAuthState(prev => ({ ...prev, user: null }));
+        setAuthState(prev => ({ ...prev, user: null, error: null }));
       }
+      setAuthState(prev => ({ ...prev, isLoading: false }));
     });
 
     // Check initial session
@@ -86,6 +88,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
       } catch (error) {
         console.error("Error checking user session:", error);
+        setAuthState(prev => ({ ...prev, error: 'Erro ao verificar sessão' }));
       } finally {
         setAuthState(prev => ({ ...prev, isLoading: false }));
       }
@@ -110,9 +113,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
       
     } catch (error: any) {
-      setAuthState(prev => ({ ...prev, error: error.message }));
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      console.error('Login error:', error);
+      setAuthState(prev => ({ ...prev, error: error.message, isLoading: false }));
+      throw error; // Re-throw so the component can handle it
     }
   };
 
@@ -134,9 +137,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
       
     } catch (error: any) {
-      setAuthState(prev => ({ ...prev, error: error.message }));
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
+      console.error('Register error:', error);
+      setAuthState(prev => ({ ...prev, error: error.message, isLoading: false }));
+      throw error; // Re-throw so the component can handle it
     }
   };
 
@@ -144,12 +147,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
+      // Clear remember me preference
+      localStorage.removeItem('hoppe_remember_me');
+      
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
       
     } catch (error: any) {
+      console.error('Logout error:', error);
       setAuthState(prev => ({ ...prev, error: error.message }));
+      throw error;
     } finally {
       setAuthState(prev => ({ ...prev, isLoading: false }));
     }
