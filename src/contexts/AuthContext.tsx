@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Empresa, Usuario } from '@/types';
@@ -28,144 +29,102 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setAuthState(prev => ({ ...prev, error: null }));
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    let timeoutId: NodeJS.Timeout;
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log('Fetching profile for user:', userId);
+      
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select(`
+          *,
+          empresas:empresa_id (*)
+        `)
+        .eq('id', userId)
+        .single();
 
-    const fetchUserProfile = async (userId: string) => {
-      try {
-        console.log('Fetching user profile for:', userId);
-        
-        const { data, error } = await supabase
-          .from('profiles')
-          .select(`
-            *,
-            empresas:empresa_id (
-              *
-            )
-          `)
-          .eq('id', userId)
-          .single();
-
-        if (error) {
-          console.error('Profile fetch error:', error);
-          throw error;
-        }
-
-        if (data && isMounted) {
-          console.log('Profile data loaded:', data);
-          const userData: Usuario = {
-            id: data.id,
-            nome: data.nome,
-            email: data.email,
-            empresaId: data.empresa_id,
-            avatarUrl: data.avatar_url || undefined,
-            cargo: data.cargo || undefined,
-            createdAt: data.created_at,
-            empresa: data.empresas ? {
-              id: data.empresas.id,
-              nome: data.empresas.nome,
-              cnpj: data.empresas.cnpj || undefined,
-              segmento: data.empresas.segmento || undefined
-            } : undefined
-          };
-          
-          setAuthState(prev => ({ ...prev, user: userData, error: null, isLoading: false }));
-        }
-      } catch (error) {
-        console.error("Error fetching user profile:", error);
-        if (isMounted) {
-          setAuthState(prev => ({ 
-            ...prev, 
-            error: 'Erro ao carregar perfil do usuário',
-            isLoading: false 
-          }));
-        }
+      if (error) {
+        console.error('Profile fetch error:', error);
+        throw error;
       }
-    };
 
-    // Timeout para evitar carregamento infinito
-    const setAuthTimeout = () => {
-      timeoutId = setTimeout(() => {
-        if (isMounted) {
-          console.warn('Auth timeout reached');
-          setAuthState(prev => ({
-            ...prev,
-            isLoading: false,
-            error: prev.user ? null : 'Tempo limite de autenticação excedido'
-          }));
-        }
-      }, 8000); // 8 segundos de timeout
-    };
+      console.log('Profile fetched successfully:', profile);
 
+      const userData: Usuario = {
+        id: profile.id,
+        nome: profile.nome,
+        email: profile.email,
+        empresaId: profile.empresa_id,
+        avatarUrl: profile.avatar_url || undefined,
+        cargo: profile.cargo || undefined,
+        createdAt: profile.created_at,
+        empresa: profile.empresas ? {
+          id: profile.empresas.id,
+          nome: profile.empresas.nome,
+          cnpj: profile.empresas.cnpj || undefined,
+          segmento: profile.empresas.segmento || undefined
+        } : undefined
+      };
+      
+      setAuthState(prev => ({ 
+        ...prev, 
+        user: userData, 
+        error: null, 
+        isLoading: false 
+      }));
+
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      setAuthState(prev => ({ 
+        ...prev, 
+        error: 'Erro ao carregar perfil do usuário',
+        isLoading: false 
+      }));
+    }
+  };
+
+  useEffect(() => {
+    console.log('Setting up auth listener...');
+    
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (!isMounted) return;
-
       console.log('Auth state changed:', event, session?.user?.id);
       
-      // Limpa timeout anterior
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-
       if (event === 'SIGNED_IN' && session?.user) {
         setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-        setAuthTimeout();
         await fetchUserProfile(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setAuthState(prev => ({ ...prev, user: null, error: null, isLoading: false }));
-      } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-        // Token foi renovado, mas usuário já existe
-        if (!authState.user) {
-          setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-          setAuthTimeout();
-          await fetchUserProfile(session.user.id);
-        }
       }
     });
 
     // Check initial session
-    const checkUser = async () => {
+    const checkInitialSession = async () => {
       try {
         console.log('Checking initial session...');
-        setAuthTimeout();
-        
         const { data: { session }, error } = await supabase.auth.getSession();
         
-        if (error) {
-          console.error('Session check error:', error);
-          throw error;
-        }
+        if (error) throw error;
         
-        if (session?.user && isMounted) {
+        if (session?.user) {
           console.log('Initial session found:', session.user.id);
-          setAuthState(prev => ({ ...prev, isLoading: true }));
           await fetchUserProfile(session.user.id);
         } else {
-          console.log('No initial session found');
-          if (isMounted) {
-            setAuthState(prev => ({ ...prev, isLoading: false }));
-          }
+          console.log('No initial session');
+          setAuthState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (error) {
-        console.error("Error checking user session:", error);
-        if (isMounted) {
-          setAuthState(prev => ({ 
-            ...prev, 
-            error: 'Erro ao verificar sessão',
-            isLoading: false 
-          }));
-        }
+        console.error('Error checking initial session:', error);
+        setAuthState(prev => ({ 
+          ...prev, 
+          error: 'Erro ao verificar sessão',
+          isLoading: false 
+        }));
       }
     };
 
-    checkUser();
+    checkInitialSession();
 
     return () => {
-      isMounted = false;
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
       subscription.unsubscribe();
     };
   }, []);
@@ -186,8 +145,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         throw error;
       }
       
-      console.log('Login successful:', data.user?.id);
-      // O auth state change vai lidar com o resto
+      console.log('Login successful for:', data.user?.id);
+      // Auth state change listener will handle the rest
       
     } catch (error: any) {
       console.error('Login error:', error);
@@ -254,8 +213,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       console.error('Logout error:', error);
       setAuthState(prev => ({ ...prev, error: 'Erro ao fazer logout' }));
       throw error;
-    } finally {
-      setAuthState(prev => ({ ...prev, isLoading: false }));
     }
   };
 
