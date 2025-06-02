@@ -1,3 +1,4 @@
+
 import Papa from 'papaparse';
 import { toast } from 'sonner';
 import { Produto, Categoria } from '@/types';
@@ -164,12 +165,13 @@ export const mapImportedToProducts = async (
       preco: preco,
       categoriaId: categoriaId || existingProduct?.categoria_id,
       empresaId,
-      unidade: 'un', // Default value since unidade column doesn't exist in database
-      estoqueMinimo: 5, // Default value since estoque_minimo column doesn't exist in database
+      estoqueMinimo: 5, // Default value
       estoqueAtual,
       validade,
       dataEntrada: existingProduct?.data_entrada || new Date().toISOString(),
-      codigoRastreio: existingProduct?.codigo_rastreio
+      codigoRastreio: existingProduct?.codigo_rastreio,
+      createdAt: existingProduct?.created_at || new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     };
 
     return produto;

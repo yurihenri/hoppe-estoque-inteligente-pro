@@ -15,7 +15,16 @@ export const usePlans = () => {
   // Helper function to convert Json to PlanFeatures
   const convertJsonToFeatures = (features: Json): PlanFeatures => {
     if (typeof features === 'object' && features !== null && !Array.isArray(features)) {
-      return features as PlanFeatures;
+      const obj = features as { [key: string]: any };
+      return {
+        reports: obj.reports || false,
+        exports: obj.exports || false,
+        integrations: obj.integrations || false,
+        email_alerts: obj.email_alerts || true,
+        app_notifications: obj.app_notifications || false,
+        advanced_dashboard: obj.advanced_dashboard || false,
+        remove_branding: obj.remove_branding || false
+      };
     }
     // Fallback for invalid data
     return {
@@ -118,7 +127,12 @@ export const usePlans = () => {
 
       if (error) throw error;
 
-      return data as PlanLimits;
+      // Safe type conversion
+      if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+        return data as PlanLimits;
+      }
+
+      return { allowed: false, reason: 'Resposta inválida' };
     } catch (error) {
       console.error('Erro ao verificar limites do plano:', error);
       return { allowed: false, reason: 'Erro ao verificar limites' };
@@ -151,12 +165,17 @@ export const usePlans = () => {
     }
   };
 
+  const hasFeature = (feature: keyof PlanFeatures): boolean => {
+    return currentPlan?.features[feature] || false;
+  };
+
   return {
     plans,
     currentSubscription,
     currentPlan,
     loading,
     checkPlanLimits,
-    switchToPlan
+    switchToPlan,
+    hasFeature
   };
 };

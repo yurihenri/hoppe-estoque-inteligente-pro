@@ -1,227 +1,153 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { Empresa, Usuario } from '@/types';
-import { Plan } from '@/types/plans';
-import { secureStorage } from '@/utils/secureStorage';
+import { Usuario, Empresa } from '@/types';
+import { Plan, PlanFeatures } from '@/types/plans';
+import { Json } from '@/integrations/supabase/types';
 
-interface AuthState {
+interface AuthContextType {
   user: Usuario | null;
-  isLoading: boolean;
-  error: string | null;
-}
-
-interface AuthContextType extends AuthState {
+  empresa: Empresa | null;
+  loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, nome: string, empresa: string) => Promise<void>;
   logout: () => Promise<void>;
-  clearError: () => void;
+  register: (userData: any) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [authState, setAuthState] = useState<AuthState>({
-    user: null,
-    isLoading: true,
-    error: null,
-  });
-
-  const clearError = () => {
-    setAuthState(prev => ({ ...prev, error: null }));
-  };
-
-  const fetchUserProfile = async (userId: string) => {
-    try {
-      const { data: profile, error } = await supabase
-        .from('profiles')
-        .select(`
-          *,
-          empresas:empresa_id (
-            *,
-            plans:current_plan_id (*)
-          )
-        `)
-        .eq('id', userId)
-        .single();
-
-      if (error) {
-        throw error;
-      }
-
-      const userData: Usuario = {
-        id: profile.id,
-        nome: profile.nome,
-        email: profile.email,
-        empresaId: profile.empresa_id,
-        avatarUrl: profile.avatar_url || undefined,
-        cargo: profile.cargo || undefined,
-        createdAt: profile.created_at,
-        empresa: profile.empresas ? {
-          id: profile.empresas.id,
-          nome: profile.empresas.nome,
-          cnpj: profile.empresas.cnpj || undefined,
-          segmento: profile.empresas.segmento || undefined,
-          currentPlan: profile.empresas.plans as Plan || undefined
-        } : undefined
-      };
-      
-      setAuthState(prev => ({ 
-        ...prev, 
-        user: userData, 
-        error: null, 
-        isLoading: false 
-      }));
-
-    } catch (error) {
-      setAuthState(prev => ({ 
-        ...prev, 
-        error: 'Erro ao carregar perfil do usuário',
-        isLoading: false 
-      }));
-    }
-  };
-
-  useEffect(() => {
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-        await fetchUserProfile(session.user.id);
-      } else if (event === 'SIGNED_OUT') {
-        setAuthState(prev => ({ ...prev, user: null, error: null, isLoading: false }));
-        secureStorage.clear();
-      }
-    });
-
-    // Check initial session
-    const checkInitialSession = async () => {
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        
-        if (error) throw error;
-        
-        if (session?.user) {
-          await fetchUserProfile(session.user.id);
-        } else {
-          setAuthState(prev => ({ ...prev, isLoading: false }));
-        }
-      } catch (error) {
-        setAuthState(prev => ({ 
-          ...prev, 
-          error: 'Erro ao verificar sessão',
-          isLoading: false 
-        }));
-      }
-    };
-
-    checkInitialSession();
-
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password,
-      });
-      
-      if (error) {
-        throw error;
-      }
-      
-      // Auth state change listener will handle the rest
-      
-    } catch (error: any) {
-      let errorMessage = "Erro ao fazer login. Tente novamente.";
-      
-      if (error?.message) {
-        if (error.message.includes('Invalid login credentials')) {
-          errorMessage = "Email ou senha incorretos.";
-        } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = "Por favor, confirme seu email antes de fazer login.";
-        } else if (error.message.includes('Too many requests')) {
-          errorMessage = "Muitas tentativas. Tente novamente em alguns minutos.";
-        }
-      }
-      
-      setAuthState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
-      throw error;
-    }
-  };
-
-  const register = async (email: string, password: string, nome: string, empresa: string) => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      const { error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password,
-        options: {
-          data: {
-            nome: nome.trim(),
-            empresa: empresa.trim(),
-          },
-        },
-      });
-      
-      if (error) throw error;
-      
-    } catch (error: any) {
-      let errorMessage = "Erro ao criar conta. Tente novamente.";
-      
-      if (error?.message) {
-        if (error.message.includes('already registered')) {
-          errorMessage = "Este email já está cadastrado.";
-        }
-      }
-      
-      setAuthState(prev => ({ ...prev, error: errorMessage, isLoading: false }));
-      throw error;
-    }
-  };
-
-  const logout = async () => {
-    try {
-      setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
-      
-      secureStorage.clear();
-      
-      const { error } = await supabase.auth.signOut();
-      
-      if (error) throw error;
-      
-    } catch (error: any) {
-      setAuthState(prev => ({ ...prev, error: 'Erro ao fazer logout' }));
-      throw error;
-    }
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        ...authState,
-        login,
-        register,
-        logout,
-        clearError,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
+const AuthContext = createContext<AuthContextType | null>(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
-  
   return context;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<Usuario | null>(null);
+  const [empresa, setEmpresa] = useState<Empresa | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Helper function to convert Json to PlanFeatures
+  const convertJsonToFeatures = (features: Json): PlanFeatures => {
+    if (typeof features === 'object' && features !== null && !Array.isArray(features)) {
+      const obj = features as { [key: string]: any };
+      return {
+        reports: obj.reports || false,
+        exports: obj.exports || false,
+        integrations: obj.integrations || false,
+        email_alerts: obj.email_alerts || true,
+        app_notifications: obj.app_notifications || false,
+        advanced_dashboard: obj.advanced_dashboard || false,
+        remove_branding: obj.remove_branding || false
+      };
+    }
+    return {
+      reports: false,
+      exports: false,
+      integrations: false,
+      email_alerts: true,
+      app_notifications: false,
+      advanced_dashboard: false,
+      remove_branding: false
+    };
+  };
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        try {
+          // Fetch user profile with company and plan data
+          const { data: profile, error } = await supabase
+            .from('profiles')
+            .select(`
+              *,
+              empresa:empresas!inner(
+                *,
+                current_plan:plans(*)
+              )
+            `)
+            .eq('id', session.user.id)
+            .single();
+
+          if (error) throw error;
+
+          if (profile) {
+            const userData: Usuario = {
+              id: profile.id,
+              nome: profile.nome,
+              email: profile.email,
+              empresaId: profile.empresa_id,
+              avatarUrl: profile.avatar_url,
+              cargo: profile.cargo,
+              createdAt: profile.created_at
+            };
+
+            const empresaData: Empresa = {
+              id: profile.empresa.id,
+              nome: profile.empresa.nome,
+              cnpj: profile.empresa.cnpj,
+              segmento: profile.empresa.segmento,
+              currentPlan: profile.empresa.current_plan ? {
+                ...profile.empresa.current_plan,
+                features: convertJsonToFeatures(profile.empresa.current_plan.features)
+              } as Plan : undefined
+            };
+
+            setUser(userData);
+            setEmpresa(empresaData);
+          }
+        } catch (error) {
+          console.error('Erro ao carregar dados do usuário:', error);
+        }
+      } else {
+        setUser(null);
+        setEmpresa(null);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const login = async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    
+    if (error) throw error;
+  };
+
+  const logout = async () => {
+    const { error } = await supabase.auth.signOut();
+    if (error) throw error;
+  };
+
+  const register = async (userData: any) => {
+    const { error } = await supabase.auth.signUp({
+      email: userData.email,
+      password: userData.password,
+      options: {
+        data: userData
+      }
+    });
+    
+    if (error) throw error;
+  };
+
+  const value = {
+    user,
+    empresa,
+    loading,
+    login,
+    logout,
+    register,
+  };
+
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 };

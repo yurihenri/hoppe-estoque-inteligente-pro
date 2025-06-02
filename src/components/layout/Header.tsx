@@ -3,14 +3,14 @@ import React from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { alertas } from "@/mockData";
+import { mockAlertas } from "@/mockData";
 
 interface HeaderProps {
   title: string;
 }
 
 const Header: React.FC<HeaderProps> = ({ title }) => {
-  const alertasNaoLidos = alertas.filter((alerta) => !alerta.lido);
+  const alertasNaoLidos = mockAlertas.filter((alerta) => !alerta.lida);
 
   return (
     <header className="flex items-center justify-between p-4 border-b border-border bg-white">
