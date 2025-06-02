@@ -17,19 +17,14 @@ const Dashboard: React.FC = () => {
   const { data: dashboardStats, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
-      console.log('Fetching dashboard statistics...');
-      
       // Fetch all products
       const { data: produtos, error } = await supabase
         .from('produtos')
         .select('*');
       
       if (error) {
-        console.error('Error fetching produtos:', error);
         throw error;
       }
-      
-      console.log('Products loaded:', produtos?.length || 0);
       
       const today = new Date();
       const nextWeek = addDays(today, 7);
@@ -65,7 +60,6 @@ const Dashboard: React.FC = () => {
         produtosSemCategoria
       };
       
-      console.log('Dashboard stats calculated:', stats);
       return stats;
     },
     refetchOnWindowFocus: false,

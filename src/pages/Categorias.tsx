@@ -53,7 +53,6 @@ const Categorias = () => {
       const normalizedCategorias = data?.map(cat => normalizeCategoria(cat)) || [];
       setCategorias(normalizedCategorias);
     } catch (error) {
-      console.error("Erro ao buscar categorias:", error);
       toast("Não foi possível carregar as categorias", {
         description: "Tente novamente mais tarde",
       });
@@ -85,7 +84,6 @@ const Categorias = () => {
       setCategoriaToDelete(categoria);
       setDeleteConfirmOpen(true);
     } catch (error) {
-      console.error("Erro ao verificar uso da categoria:", error);
       toast("Erro ao verificar uso da categoria", {
         description: "Não foi possível verificar se a categoria está sendo usada",
       });
@@ -129,7 +127,6 @@ const Categorias = () => {
         });
       }
     } catch (error: any) {
-      console.error("Erro ao excluir categoria:", error);
       toast("Erro ao excluir categoria", {
         description: error.message,
       });

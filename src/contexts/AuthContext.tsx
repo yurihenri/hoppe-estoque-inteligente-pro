@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Empresa, Usuario } from '@/types';
+import { secureStorage } from '@/utils/secureStorage';
 
 interface AuthState {
   user: Usuario | null;
@@ -31,8 +32,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log('Fetching profile for user:', userId);
-      
       const { data: profile, error } = await supabase
         .from('profiles')
         .select(`
@@ -43,11 +42,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .single();
 
       if (error) {
-        console.error('Profile fetch error:', error);
         throw error;
       }
-
-      console.log('Profile fetched successfully:', profile);
 
       const userData: Usuario = {
         id: profile.id,
@@ -73,7 +69,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }));
 
     } catch (error) {
-      console.error('Error fetching user profile:', error);
       setAuthState(prev => ({ 
         ...prev, 
         error: 'Erro ao carregar perfil do usuário',
@@ -83,37 +78,30 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    console.log('Setting up auth listener...');
-    
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('Auth state changed:', event, session?.user?.id);
-      
       if (event === 'SIGNED_IN' && session?.user) {
         setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
         await fetchUserProfile(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setAuthState(prev => ({ ...prev, user: null, error: null, isLoading: false }));
+        secureStorage.clear(); // Clear all secure storage on logout
       }
     });
 
     // Check initial session
     const checkInitialSession = async () => {
       try {
-        console.log('Checking initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (error) throw error;
         
         if (session?.user) {
-          console.log('Initial session found:', session.user.id);
           await fetchUserProfile(session.user.id);
         } else {
-          console.log('No initial session');
           setAuthState(prev => ({ ...prev, isLoading: false }));
         }
       } catch (error) {
-        console.error('Error checking initial session:', error);
         setAuthState(prev => ({ 
           ...prev, 
           error: 'Erro ao verificar sessão',
@@ -133,23 +121,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      console.log('Attempting login for:', email);
-      
       const { data, error } = await supabase.auth.signInWithPassword({
         email: email.trim(),
         password,
       });
       
       if (error) {
-        console.error('Login error:', error);
         throw error;
       }
       
-      console.log('Login successful for:', data.user?.id);
       // Auth state change listener will handle the rest
       
     } catch (error: any) {
-      console.error('Login error:', error);
       let errorMessage = "Erro ao fazer login. Tente novamente.";
       
       if (error?.message) {
@@ -185,7 +168,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (error) throw error;
       
     } catch (error: any) {
-      console.error('Register error:', error);
       let errorMessage = "Erro ao criar conta. Tente novamente.";
       
       if (error?.message) {
@@ -203,14 +185,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      localStorage.removeItem('hoppe_remember_me');
+      // Clear secure storage instead of localStorage
+      secureStorage.clear();
       
       const { error } = await supabase.auth.signOut();
       
       if (error) throw error;
       
     } catch (error: any) {
-      console.error('Logout error:', error);
       setAuthState(prev => ({ ...prev, error: 'Erro ao fazer logout' }));
       throw error;
     }

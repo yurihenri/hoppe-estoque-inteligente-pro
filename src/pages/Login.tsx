@@ -12,6 +12,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Credentials } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { secureStorage } from '@/utils/secureStorage';
 
 const loginSchema = z.object({
   email: z.string()
@@ -43,7 +44,6 @@ const Login = () => {
   // Redireciona se já logado
   useEffect(() => {
     if (user && !isLoading) {
-      console.log('User authenticated, redirecting to dashboard');
       const from = location.state?.from?.pathname || '/dashboard';
       navigate(from, { replace: true });
     }
@@ -59,10 +59,10 @@ const Login = () => {
     return () => subscription.unsubscribe();
   }, [watch, error, clearError]);
 
-  // Carrega preferência "lembrar de mim"
+  // Carrega preferência "lembrar de mim" do secure storage
   useEffect(() => {
-    const saved = localStorage.getItem('hoppe_remember_me');
-    if (saved === 'true') {
+    const saved = secureStorage.getUserPreference('remember_me');
+    if (saved === true) {
       setRememberMe(true);
     }
   }, []);
@@ -72,14 +72,13 @@ const Login = () => {
 
   const onSubmit = async (data: Credentials) => {
     try {
-      console.log('Submitting login...');
       await login(data.email, data.password);
       
-      // Salva preferência
+      // Salva preferência no secure storage
       if (rememberMe) {
-        localStorage.setItem('hoppe_remember_me', 'true');
+        secureStorage.setUserPreference('remember_me', true);
       } else {
-        localStorage.removeItem('hoppe_remember_me');
+        secureStorage.setUserPreference('remember_me', false);
       }
       
       toast({
@@ -88,8 +87,7 @@ const Login = () => {
       });
       
     } catch (error: any) {
-      console.error('Login failed:', error);
-      // Erro já tratado no contexto
+      // Error is already handled in AuthContext
     }
   };
 
@@ -141,6 +139,7 @@ const Login = () => {
                     className="pl-10 bg-white/10 border-white/30 text-white placeholder-blue-200"
                     {...register('email')}
                     disabled={isLoading}
+                    autoComplete="email"
                   />
                 </div>
                 {errors.email && (
@@ -160,6 +159,7 @@ const Login = () => {
                     className="pl-10 pr-10 bg-white/10 border-white/30 text-white placeholder-blue-200"
                     {...register('password')}
                     disabled={isLoading}
+                    autoComplete="current-password"
                   />
                   <Button
                     type="button"
