@@ -1,7 +1,7 @@
-
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Empresa, Usuario } from '@/types';
+import { Plan } from '@/types/plans';
 import { secureStorage } from '@/utils/secureStorage';
 
 interface AuthState {
@@ -36,7 +36,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         .from('profiles')
         .select(`
           *,
-          empresas:empresa_id (*)
+          empresas:empresa_id (
+            *,
+            plans:current_plan_id (*)
+          )
         `)
         .eq('id', userId)
         .single();
@@ -57,7 +60,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           id: profile.empresas.id,
           nome: profile.empresas.nome,
           cnpj: profile.empresas.cnpj || undefined,
-          segmento: profile.empresas.segmento || undefined
+          segmento: profile.empresas.segmento || undefined,
+          currentPlan: profile.empresas.plans as Plan || undefined
         } : undefined
       };
       
@@ -85,7 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         await fetchUserProfile(session.user.id);
       } else if (event === 'SIGNED_OUT') {
         setAuthState(prev => ({ ...prev, user: null, error: null, isLoading: false }));
-        secureStorage.clear(); // Clear all secure storage on logout
+        secureStorage.clear();
       }
     });
 
@@ -185,7 +189,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setAuthState(prev => ({ ...prev, isLoading: true, error: null }));
       
-      // Clear secure storage instead of localStorage
       secureStorage.clear();
       
       const { error } = await supabase.auth.signOut();

@@ -1,17 +1,20 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Produto, Categoria } from '@/types';
 import { normalizeCategoria, normalizeProduto } from '@/utils/normalizeData';
+import { usePlans } from '@/hooks/usePlans';
 import RelatorioDashboard from '@/components/relatorios/dashboard/RelatorioDashboard';
 import VencimentosTabContent from '@/components/relatorios/tabs/VencimentosTabContent';
 import EstoqueTabContent from '@/components/relatorios/tabs/EstoqueTabContent';
 import FinanceiroTabContent from '@/components/relatorios/tabs/FinanceiroTabContent';
 import { addDays, isBefore, format } from 'date-fns';
+import { Crown, Lock } from 'lucide-react';
+import { Link } from 'react-router-dom';
 
 // Tipos para os dados de relatório
 interface DadosVencimento {
@@ -20,6 +23,7 @@ interface DadosVencimento {
 }
 
 const Relatorios = () => {
+  const { hasFeature, currentPlan } = usePlans();
   const [isLoading, setIsLoading] = useState(true);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
@@ -28,6 +32,8 @@ const Relatorios = () => {
   const [custoVencimento, setCustoVencimento] = useState(0);
   const [exportando, setExportando] = useState(false);
   const [empresaId, setEmpresaId] = useState<string>('');
+
+  const hasReportsAccess = hasFeature('reports');
 
   // Carregar dados básicos necessários para os relatórios
   const carregarDados = async () => {
@@ -113,6 +119,39 @@ const Relatorios = () => {
   useEffect(() => {
     carregarDados();
   }, []);
+
+  if (!hasReportsAccess) {
+    return (
+      <Layout title="Relatórios">
+        <div className="container mx-auto py-6">
+          <h1 className="text-2xl font-bold mb-6">Relatórios</h1>
+          
+          <Card className="max-w-md mx-auto">
+            <CardHeader className="text-center">
+              <div className="mx-auto w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <Lock className="h-6 w-6 text-gray-400" />
+              </div>
+              <CardTitle>Acesso Restrito</CardTitle>
+            </CardHeader>
+            <CardContent className="text-center space-y-4">
+              <p className="text-gray-600">
+                Os relatórios avançados estão disponíveis apenas no plano Pro.
+              </p>
+              <p className="text-sm text-gray-500">
+                Plano atual: <strong>{currentPlan?.name}</strong>
+              </p>
+              <Button asChild className="w-full">
+                <Link to="/planos">
+                  <Crown className="mr-2 h-4 w-4" />
+                  Fazer Upgrade
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
 
   return (
     <Layout title="Relatórios">

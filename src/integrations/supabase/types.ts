@@ -51,6 +51,7 @@ export type Database = {
         Row: {
           cnpj: string | null
           created_at: string
+          current_plan_id: string | null
           id: string
           nome: string
           segmento: string | null
@@ -58,6 +59,7 @@ export type Database = {
         Insert: {
           cnpj?: string | null
           created_at?: string
+          current_plan_id?: string | null
           id?: string
           nome: string
           segmento?: string | null
@@ -65,9 +67,51 @@ export type Database = {
         Update: {
           cnpj?: string | null
           created_at?: string
+          current_plan_id?: string | null
           id?: string
           nome?: string
           segmento?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "empresas_current_plan_id_fkey"
+            columns: ["current_plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plans: {
+        Row: {
+          created_at: string
+          features: Json
+          id: string
+          max_products: number
+          max_users: number
+          name: string
+          price_brl: number
+          type: Database["public"]["Enums"]["plan_type"]
+        }
+        Insert: {
+          created_at?: string
+          features?: Json
+          id?: string
+          max_products: number
+          max_users: number
+          name: string
+          price_brl?: number
+          type: Database["public"]["Enums"]["plan_type"]
+        }
+        Update: {
+          created_at?: string
+          features?: Json
+          id?: string
+          max_products?: number
+          max_users?: number
+          name?: string
+          price_brl?: number
+          type?: Database["public"]["Enums"]["plan_type"]
         }
         Relationships: []
       }
@@ -169,15 +213,69 @@ export type Database = {
           },
         ]
       }
+      subscriptions: {
+        Row: {
+          created_at: string
+          empresa_id: string
+          expires_at: string | null
+          id: string
+          plan_id: string
+          started_at: string
+          status: string
+          stripe_subscription_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          empresa_id: string
+          expires_at?: string | null
+          id?: string
+          plan_id: string
+          started_at?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          empresa_id?: string
+          expires_at?: string | null
+          id?: string
+          plan_id?: string
+          started_at?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_empresa_id_fkey"
+            columns: ["empresa_id"]
+            isOneToOne: false
+            referencedRelation: "empresas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      check_plan_limits: {
+        Args: { empresa_uuid: string; limit_type: string }
+        Returns: Json
+      }
     }
     Enums: {
-      [_ in never]: never
+      plan_type: "free" | "pro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -292,6 +390,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      plan_type: ["free", "pro"],
+    },
   },
 } as const
