@@ -127,12 +127,12 @@ export const usePlans = () => {
 
       if (error) throw error;
 
-      // Safe type conversion
-      if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+      // Safely convert the response to PlanLimits
+      if (data && typeof data === 'object' && 'allowed' in data) {
         return data as PlanLimits;
       }
 
-      return { allowed: false, reason: 'Resposta inválida' };
+      return { allowed: false, reason: 'Resposta inválida do servidor' };
     } catch (error) {
       console.error('Erro ao verificar limites do plano:', error);
       return { allowed: false, reason: 'Erro ao verificar limites' };

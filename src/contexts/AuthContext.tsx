@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Usuario, Empresa } from '@/types';
@@ -8,9 +9,12 @@ interface AuthContextType {
   user: Usuario | null;
   empresa: Empresa | null;
   loading: boolean;
+  isLoading: boolean; // Alias for loading
+  error: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (userData: any) => Promise<void>;
+  clearError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -27,6 +31,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<Usuario | null>(null);
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const clearError = () => setError(null);
 
   // Helper function to convert Json to PlanFeatures
   const convertJsonToFeatures = (features: Json): PlanFeatures => {
@@ -55,6 +62,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setError(null);
+      
       if (session?.user) {
         try {
           // Fetch user profile with company and plan data
@@ -97,8 +106,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(userData);
             setEmpresa(empresaData);
           }
-        } catch (error) {
+        } catch (error: any) {
           console.error('Erro ao carregar dados do usuário:', error);
+          setError(error.message || 'Erro ao carregar dados do usuário');
         }
       } else {
         setUser(null);
@@ -111,38 +121,59 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) throw error;
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      setError(error.message || 'Erro ao fazer login');
+      throw error;
+    }
   };
 
   const logout = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+    } catch (error: any) {
+      setError(error.message || 'Erro ao fazer logout');
+      throw error;
+    }
   };
 
   const register = async (userData: any) => {
-    const { error } = await supabase.auth.signUp({
-      email: userData.email,
-      password: userData.password,
-      options: {
-        data: userData
-      }
-    });
-    
-    if (error) throw error;
+    setError(null);
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: userData
+        }
+      });
+      
+      if (error) throw error;
+    } catch (error: any) {
+      setError(error.message || 'Erro ao registrar usuário');
+      throw error;
+    }
   };
 
   const value = {
     user,
     empresa,
     loading,
+    isLoading: loading, // Alias for compatibility
+    error,
     login,
     logout,
     register,
+    clearError,
   };
 
   return (

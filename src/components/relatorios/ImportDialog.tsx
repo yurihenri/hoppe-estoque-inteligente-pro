@@ -12,11 +12,10 @@ import {
 } from '@/components/ui/dialog';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { parseCSV, validateImportedProducts, mapImportedToProducts, importProdutos } from '@/utils/importUtils';
+import { parseCSV, validateImportedProducts, mapImportedToProducts, importProdutos } from '@/utils/import';
 import { toast } from 'sonner';
-import { Produto, Categoria } from '@/types';
+import { Categoria } from '@/types';
 import { AlertCircle, Loader2, FileUp } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 
 interface ImportDialogProps {
   open: boolean;
@@ -38,7 +37,6 @@ const ImportDialog: React.FC<ImportDialogProps> = ({
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [step, setStep] = useState<'upload' | 'preview' | 'importing'>('upload');
-  const navigate = useNavigate();
   
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
