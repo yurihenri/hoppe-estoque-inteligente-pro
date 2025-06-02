@@ -1,341 +1,187 @@
+
 import { Alerta, Categoria, DadosDashboard, Empresa, Lote, Movimentacao, Produto, StatusLote, Usuario } from "../types";
 
-// Dados da empresa atual
-export const empresaAtual: Empresa = {
+// Mock Empresa
+export const mockEmpresa: Empresa = {
   id: "1",
-  nome: "Supermercado Modelo",
+  nome: "Farmácia Central",
   cnpj: "12.345.678/0001-90",
-  logo: "/logo.svg",
-  segmento: "Supermercado",
-  endereco: "Av. Principal, 1000 - São Paulo/SP"
+  segmento: "Farmácia"
 };
 
-// Usuário logado
-export const usuarioLogado: Usuario = {
-  id: "1",
-  nome: "João Silva",
-  email: "joao@modelo.com",
-  cargo: "Gerente de Estoque",
-  avatarUrl: "/avatar.png",
-  empresaId: "1",
-  createdAt: new Date().toISOString()
-};
-
-// Categorias
-export const categorias: Categoria[] = [
-  { id: "1", nome: "Laticínios", cor: "#10B981", descricao: "Produtos derivados do leite", empresaId: "1" },
-  { id: "2", nome: "Padaria", cor: "#F59E0B", descricao: "Produtos de panificação", empresaId: "1" },
-  { id: "3", nome: "Hortifruti", cor: "#0EA5E9", descricao: "Frutas, legumes e verduras", empresaId: "1" },
-  { id: "4", nome: "Carnes", cor: "#EF4444", descricao: "Carnes e derivados", empresaId: "1" },
-  { id: "5", nome: "Bebidas", cor: "#8B5CF6", descricao: "Bebidas em geral", empresaId: "1" }
+// Mock Usuários
+export const mockUsuarios: Usuario[] = [
+  {
+    id: "1",
+    nome: "João Silva",
+    email: "joao@farmaciacentral.com",
+    empresaId: "1",
+    cargo: "Gerente",
+    createdAt: "2024-01-01T00:00:00Z"
+  }
 ];
 
-// Função para criar data no passado (dias)
-const diasAtras = (dias: number): Date => {
-  const data = new Date();
-  data.setDate(data.getDate() - dias);
-  return data;
-};
+// Mock Categorias
+export const mockCategorias: Categoria[] = [
+  { id: "1", nome: "Medicamentos", cor: "#FF6B6B", descricao: "Produtos farmacêuticos", empresaId: "1", createdAt: "2024-01-01T00:00:00Z" },
+  { id: "2", nome: "Cosméticos", cor: "#4ECDC4", descricao: "Produtos de beleza", empresaId: "1", createdAt: "2024-01-01T00:00:00Z" },
+  { id: "3", nome: "Higiene", cor: "#45B7D1", descricao: "Produtos de higiene pessoal", empresaId: "1", createdAt: "2024-01-01T00:00:00Z" },
+  { id: "4", nome: "Suplementos", cor: "#96CEB4", descricao: "Vitaminas e suplementos", empresaId: "1", createdAt: "2024-01-01T00:00:00Z" },
+  { id: "5", nome: "Bebê", cor: "#FFEAA7", descricao: "Produtos para bebês", empresaId: "1", createdAt: "2024-01-01T00:00:00Z" }
+];
 
-// Função para criar data no futuro (dias)
-const diasFuturos = (dias: number): Date => {
-  const data = new Date();
-  data.setDate(data.getDate() + dias);
-  return data;
-};
+// Mock Status Lote
+export const mockStatusLote: StatusLote[] = [
+  { id: "1", nome: "Ativo", cor: "#4CAF50" },
+  { id: "2", nome: "Vencido", cor: "#F44336" },
+  { id: "3", nome: "Próximo ao Vencimento", cor: "#FF9800" }
+];
 
-// Produtos
-export const produtos: Produto[] = [
-  { 
-    id: "1", 
-    nome: "Leite Integral", 
-    descricao: "Leite integral 1L", 
-    codigoBarras: "7891234567890", 
-    preco: 4.99, 
-    imagem: "/leite.jpg", 
-    categoriaId: "1", 
-    empresaId: "1", 
-    unidade: "L", 
-    estoqueMinimo: 20, 
-    estoqueAtual: 45,
-    dataEntrada: new Date().toISOString()
+// Mock Produtos
+export const mockProdutos: Produto[] = [
+  {
+    id: "1",
+    nome: "Dipirona 500mg",
+    descricao: "Analgésico e antitérmico",
+    preco: 12.50,
+    estoqueAtual: 150,
+    estoqueMinimo: 20,
+    validade: "2024-12-31",
+    dataEntrada: "2024-01-15T10:00:00Z",
+    codigoRastreio: "DIP001",
+    categoriaId: "1",
+    empresaId: "1",
+    createdAt: "2024-01-15T10:00:00Z",
+    updatedAt: "2024-01-15T10:00:00Z"
   },
-  { 
-    id: "2", 
-    nome: "Pão Francês", 
-    descricao: "Pão francês tradicional", 
-    codigoBarras: "7891234567891", 
-    preco: 0.75, 
-    categoriaId: "2", 
-    empresaId: "1", 
-    unidade: "Un", 
-    estoqueMinimo: 50, 
-    estoqueAtual: 120,
-    dataEntrada: new Date().toISOString()
-  },
-  { 
-    id: "3", 
-    nome: "Maçã Fuji", 
-    descricao: "Maçã fuji fresca", 
-    codigoBarras: "7891234567892", 
-    preco: 8.99, 
-    imagem: "/maca.jpg", 
-    categoriaId: "3", 
-    empresaId: "1", 
-    unidade: "Kg", 
-    estoqueMinimo: 15, 
+  {
+    id: "2",
+    nome: "Shampoo Anticaspa",
+    descricao: "Tratamento para caspa e coceira",
+    preco: 25.90,
     estoqueAtual: 8,
-    dataEntrada: new Date().toISOString()
+    estoqueMinimo: 15,
+    validade: "2025-06-30",
+    dataEntrada: "2024-02-01T14:30:00Z",
+    codigoRastreio: "SHA002",
+    categoriaId: "3",
+    empresaId: "1",
+    createdAt: "2024-02-01T14:30:00Z",
+    updatedAt: "2024-02-01T14:30:00Z"
   },
-  { 
-    id: "4", 
-    nome: "Filé Mignon", 
-    descricao: "Filé mignon bovino", 
-    codigoBarras: "7891234567893", 
-    preco: 89.90, 
-    categoriaId: "4", 
-    empresaId: "1", 
-    unidade: "Kg", 
-    estoqueMinimo: 10, 
-    estoqueAtual: 15,
-    dataEntrada: new Date().toISOString()
+  {
+    id: "3",
+    nome: "Vitamina C 1000mg",
+    descricao: "Suplemento vitamínico",
+    preco: 35.00,
+    estoqueAtual: 45,
+    estoqueMinimo: 10,
+    validade: "2024-08-15",
+    dataEntrada: "2024-01-20T09:15:00Z",
+    codigoRastreio: "VIT003",
+    categoriaId: "4",
+    empresaId: "1",
+    createdAt: "2024-01-20T09:15:00Z",
+    updatedAt: "2024-01-20T09:15:00Z"
   },
-  { 
-    id: "5", 
-    nome: "Água Mineral", 
-    descricao: "Água mineral sem gás 500ml", 
-    codigoBarras: "7891234567894", 
-    preco: 2.50, 
-    imagem: "/agua.jpg", 
-    categoriaId: "5", 
-    empresaId: "1", 
-    unidade: "Un", 
-    estoqueMinimo: 30, 
-    estoqueAtual: 78,
-    dataEntrada: new Date().toISOString()
+  {
+    id: "4",
+    nome: "Protetor Solar FPS 60",
+    descricao: "Proteção solar facial",
+    preco: 48.90,
+    estoqueAtual: 22,
+    estoqueMinimo: 5,
+    validade: "2025-03-30",
+    dataEntrada: "2024-01-25T16:45:00Z",
+    codigoRastreio: "SOL004",
+    categoriaId: "2",
+    empresaId: "1",
+    createdAt: "2024-01-25T16:45:00Z",
+    updatedAt: "2024-01-25T16:45:00Z"
+  },
+  {
+    id: "5",
+    nome: "Fralda Descartável P",
+    descricao: "Pacote com 50 unidades",
+    preco: 42.50,
+    estoqueAtual: 12,
+    estoqueMinimo: 8,
+    validade: "2026-01-15",
+    dataEntrada: "2024-02-05T11:20:00Z",
+    codigoRastreio: "FRA005",
+    categoriaId: "5",
+    empresaId: "1",
+    createdAt: "2024-02-05T11:20:00Z",
+    updatedAt: "2024-02-05T11:20:00Z"
   }
 ];
 
-// Função para determinar o status do lote
-const determinarStatusLote = (dataValidade: Date): StatusLote => {
-  const hoje = new Date();
-  const diferencaDias = Math.floor((dataValidade.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24));
-  
-  if (diferencaDias < 0) return 'vencido';
-  if (diferencaDias <= 7) return 'proxVencimento';
-  return 'normal';
-};
-
-// Lotes
-export const lotes: Lote[] = [
-  { 
-    id: "1", 
-    produtoId: "1", 
-    quantidade: 20, 
-    dataFabricacao: diasAtras(15), 
-    dataValidade: diasFuturos(15), 
-    numeroLote: "LT2023001", 
-    localArmazenamento: "Prateleira A1", 
-    empresaId: "1", 
-    status: determinarStatusLote(diasFuturos(15))
+// Mock Lotes
+export const mockLotes: Lote[] = [
+  {
+    id: "1",
+    produtoId: "1",
+    quantidade: 100,
+    dataEntrada: "2024-01-15",
+    validade: "2024-12-31",
+    status: mockStatusLote[0]
   },
-  { 
-    id: "2", 
-    produtoId: "1", 
-    quantidade: 25, 
-    dataFabricacao: diasAtras(10), 
-    dataValidade: diasFuturos(20), 
-    numeroLote: "LT2023002", 
-    localArmazenamento: "Prateleira A2", 
-    empresaId: "1", 
-    status: determinarStatusLote(diasFuturos(20))
-  },
-  { 
-    id: "3", 
-    produtoId: "2", 
-    quantidade: 120, 
-    dataFabricacao: diasAtras(1), 
-    dataValidade: diasFuturos(2), 
-    numeroLote: "LT2023003", 
-    localArmazenamento: "Vitrine", 
-    empresaId: "1", 
-    status: determinarStatusLote(diasFuturos(2))
-  },
-  { 
-    id: "4", 
-    produtoId: "3", 
-    quantidade: 8, 
-    dataFabricacao: diasAtras(5), 
-    dataValidade: diasFuturos(5), 
-    numeroLote: "LT2023004", 
-    localArmazenamento: "Bancada B3", 
-    empresaId: "1", 
-    status: determinarStatusLote(diasFuturos(5))
-  },
-  { 
-    id: "5", 
-    produtoId: "4", 
-    quantidade: 15, 
-    dataFabricacao: diasAtras(3), 
-    dataValidade: diasFuturos(10), 
-    numeroLote: "LT2023005", 
-    localArmazenamento: "Refrigerador 2", 
-    empresaId: "1", 
-    status: determinarStatusLote(diasFuturos(10))
-  },
-  { 
-    id: "6", 
-    produtoId: "5", 
-    quantidade: 50, 
-    dataFabricacao: diasAtras(60), 
-    dataValidade: diasFuturos(305), 
-    numeroLote: "LT2023006", 
-    localArmazenamento: "Estante E1", 
-    empresaId: "1", 
-    status: determinarStatusLote(diasFuturos(305))
-  },
-  { 
-    id: "7", 
-    produtoId: "1", 
-    quantidade: 10, 
-    dataFabricacao: diasAtras(20), 
-    dataValidade: diasAtras(5), 
-    numeroLote: "LT2023007", 
-    localArmazenamento: "Prateleira A1", 
-    empresaId: "1", 
-    status: determinarStatusLote(diasAtras(5))
+  {
+    id: "2",
+    produtoId: "3",
+    quantidade: 50,
+    dataEntrada: "2024-01-20",
+    validade: "2024-08-15",
+    status: mockStatusLote[2]
   }
 ];
 
-// Alertas
-export const alertas: Alerta[] = [
-  { 
-    id: "1", 
-    tipo: "vencimento", 
-    produtoId: "1", 
-    loteId: "7", 
-    mensagem: "Lote LT2023007 de Leite Integral VENCIDO! É necessário realizar o descarte.", 
-    data: diasAtras(5), 
-    lido: false, 
-    empresaId: "1" 
+// Mock Movimentações
+export const mockMovimentacoes: Movimentacao[] = [
+  {
+    id: "1",
+    produtoId: "1",
+    tipo: "entrada",
+    quantidade: 100,
+    data: "2024-01-15T10:00:00Z",
+    observacao: "Compra do fornecedor"
   },
-  { 
-    id: "2", 
-    tipo: "vencimento", 
-    produtoId: "2", 
-    loteId: "3", 
-    mensagem: "Lote LT2023003 de Pão Francês vence em 2 dias. Considere uma promoção.", 
-    data: new Date(), 
-    lido: false, 
-    empresaId: "1" 
-  },
-  { 
-    id: "3", 
-    tipo: "vencimento", 
-    produtoId: "3", 
-    loteId: "4", 
-    mensagem: "Lote LT2023004 de Maçã Fuji vence em 5 dias. Realize verificação.", 
-    data: new Date(), 
-    lido: true, 
-    empresaId: "1" 
-  },
-  { 
-    id: "4", 
-    tipo: "estoqueBaixo", 
-    produtoId: "3", 
-    mensagem: "Estoque de Maçã Fuji abaixo do mínimo. Atual: 8, Mínimo: 15", 
-    data: diasAtras(1), 
-    lido: false, 
-    empresaId: "1" 
+  {
+    id: "2",
+    produtoId: "1",
+    tipo: "saida",
+    quantidade: 10,
+    data: "2024-01-16T15:30:00Z",
+    observacao: "Venda no balcão"
   }
 ];
 
-// Movimentações
-export const movimentacoes: Movimentacao[] = [
-  { 
-    id: "1", 
-    tipo: "entrada", 
-    produtoId: "1", 
-    loteId: "1", 
-    quantidade: 20, 
-    data: diasAtras(15), 
-    responsavelId: "1", 
-    motivo: "Compra de fornecedor", 
-    empresaId: "1" 
+// Mock Alertas
+export const mockAlertas: Alerta[] = [
+  {
+    id: "1",
+    tipo: "estoque_baixo",
+    mensagem: "Shampoo Anticaspa está com estoque baixo (8 unidades)",
+    produtoId: "2",
+    empresaId: "1",
+    lida: false,
+    createdAt: "2024-02-15T08:00:00Z"
   },
-  { 
-    id: "2", 
-    tipo: "entrada", 
-    produtoId: "1", 
-    loteId: "2", 
-    quantidade: 25, 
-    data: diasAtras(10), 
-    responsavelId: "1", 
-    motivo: "Compra de fornecedor", 
-    empresaId: "1" 
-  },
-  { 
-    id: "3", 
-    tipo: "saida", 
-    produtoId: "1", 
-    loteId: "7", 
-    quantidade: 10, 
-    data: diasAtras(5), 
-    responsavelId: "1", 
-    motivo: "Vencimento", 
-    empresaId: "1" 
-  },
-  { 
-    id: "4", 
-    tipo: "entrada", 
-    produtoId: "3", 
-    loteId: "4", 
-    quantidade: 15, 
-    data: diasAtras(5), 
-    responsavelId: "1", 
-    motivo: "Compra de fornecedor", 
-    empresaId: "1" 
-  },
-  { 
-    id: "5", 
-    tipo: "saida", 
-    produtoId: "3", 
-    quantidade: 7, 
-    data: diasAtras(2), 
-    responsavelId: "1", 
-    motivo: "Vendas", 
-    empresaId: "1" 
+  {
+    id: "2",
+    tipo: "vencimento_proximo",
+    mensagem: "Vitamina C 1000mg vence em 30 dias",
+    produtoId: "3",
+    empresaId: "1",
+    lida: false,
+    createdAt: "2024-02-14T10:30:00Z"
   }
 ];
 
-// Dados para o Dashboard
-export const dadosDashboard: DadosDashboard = {
-  totalProdutos: produtos.length,
-  produtosVencidos: lotes.filter(lote => lote.status === 'vencido').length,
-  produtosAVencer: lotes.filter(lote => lote.status === 'proxVencimento').length,
-  distribuicaoCategorias: categorias.map(cat => ({
-    categoria: cat.nome,
-    quantidade: produtos.filter(p => p.categoriaId === cat.id).length
-  })),
-  distribuicaoValidade: [
-    { status: "Normal", quantidade: lotes.filter(lote => lote.status === 'normal').length },
-    { status: "Próximo ao Vencimento", quantidade: lotes.filter(lote => lote.status === 'proxVencimento').length },
-    { status: "Vencido", quantidade: lotes.filter(lote => lote.status === 'vencido').length }
-  ],
-  alertas: alertas
-};
-
-// Função para obter a categoria pelo ID
-export const getCategoriaById = (id: string): Categoria | undefined => {
-  return categorias.find(cat => cat.id === id);
-};
-
-// Função para obter o produto pelo ID
-export const getProdutoById = (id: string): Produto | undefined => {
-  return produtos.find(p => p.id === id);
-};
-
-// Função para filtrar lotes pelo produto ID
-export const getLotesByProdutoId = (produtoId: string): Lote[] => {
-  return lotes.filter(lote => lote.produtoId === produtoId);
+// Mock Dados Dashboard
+export const mockDadosDashboard: DadosDashboard = {
+  totalProdutos: 237,
+  produtosComEstoqueBaixo: 12,
+  produtosVencendo: 5,
+  valorTotalEstoque: 125450.80
 };

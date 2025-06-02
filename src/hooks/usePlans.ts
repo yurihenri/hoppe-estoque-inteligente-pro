@@ -1,9 +1,9 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
-import { Plan, Subscription, PlanLimits } from '@/types/plans';
-import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { Plan, Subscription, PlanLimits, PlanFeatures } from '@/types/plans';
+import { Json } from '@/integrations/supabase/types';
 
 export const usePlans = () => {
   const { user } = useAuth();
@@ -12,68 +12,99 @@ export const usePlans = () => {
   const [currentPlan, setCurrentPlan] = useState<Plan | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Buscar todos os planos disponíveis
-  const fetchPlans = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('plans')
-        .select('*')
-        .order('price_brl');
-
-      if (error) throw error;
-      setPlans(data || []);
-    } catch (error) {
-      console.error('Erro ao buscar planos:', error);
-      toast.error('Erro ao carregar planos');
+  // Helper function to convert Json to PlanFeatures
+  const convertJsonToFeatures = (features: Json): PlanFeatures => {
+    if (typeof features === 'object' && features !== null && !Array.isArray(features)) {
+      return features as PlanFeatures;
     }
+    // Fallback for invalid data
+    return {
+      reports: false,
+      exports: false,
+      integrations: false,
+      email_alerts: true,
+      app_notifications: false,
+      advanced_dashboard: false,
+      remove_branding: false
+    };
   };
 
-  // Buscar assinatura atual da empresa
-  const fetchCurrentSubscription = async () => {
-    if (!user?.empresaId) return;
+  useEffect(() => {
+    const loadPlans = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('plans')
+          .select('*')
+          .order('price_brl', { ascending: true });
 
-    try {
-      const { data, error } = await supabase
-        .from('subscriptions')
-        .select(`
-          *,
-          plan:plan_id (*)
-        `)
-        .eq('empresa_id', user.empresaId)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
+        if (error) throw error;
 
-      if (error && error.code !== 'PGRST116') throw error;
-      
-      if (data) {
-        setCurrentSubscription(data);
-        setCurrentPlan(data.plan as Plan);
-      } else {
-        // Se não há assinatura, buscar plano atual da empresa
-        const { data: empresaData, error: empresaError } = await supabase
-          .from('empresas')
+        // Convert the data to proper Plan objects
+        const normalizedPlans: Plan[] = (data || []).map(plan => ({
+          ...plan,
+          features: convertJsonToFeatures(plan.features)
+        }));
+
+        setPlans(normalizedPlans);
+      } catch (error) {
+        console.error('Erro ao carregar planos:', error);
+      }
+    };
+
+    loadPlans();
+  }, []);
+
+  useEffect(() => {
+    const loadCurrentSubscription = async () => {
+      if (!user?.empresaId) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('subscriptions')
           .select(`
-            current_plan_id,
-            plans:current_plan_id (*)
+            *,
+            plan:plans(*)
           `)
-          .eq('id', user.empresaId)
+          .eq('empresa_id', user.empresaId)
+          .eq('status', 'active')
           .single();
 
-        if (empresaError) throw empresaError;
-        if (empresaData?.plans) {
-          setCurrentPlan(empresaData.plans as Plan);
+        if (error && error.code !== 'PGRST116') {
+          throw error;
         }
-      }
-    } catch (error) {
-      console.error('Erro ao buscar assinatura atual:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  // Verificar limites do plano
+        if (data && data.plan) {
+          const normalizedSubscription: Subscription = {
+            ...data,
+            plan: {
+              ...data.plan,
+              features: convertJsonToFeatures(data.plan.features)
+            }
+          };
+          setCurrentSubscription(normalizedSubscription);
+          setCurrentPlan(normalizedSubscription.plan);
+        } else {
+          // Se não há assinatura ativa, buscar plano gratuito
+          const freePlan = plans.find(p => p.type === 'free');
+          if (freePlan) {
+            setCurrentPlan(freePlan);
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao carregar assinatura atual:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (plans.length > 0) {
+      loadCurrentSubscription();
+    }
+  }, [user?.empresaId, plans]);
+
   const checkPlanLimits = async (limitType: 'products' | 'users'): Promise<PlanLimits> => {
     if (!user?.empresaId) {
       return { allowed: false, reason: 'Usuário não autenticado' };
@@ -86,6 +117,7 @@ export const usePlans = () => {
       });
 
       if (error) throw error;
+
       return data as PlanLimits;
     } catch (error) {
       console.error('Erro ao verificar limites do plano:', error);
@@ -93,20 +125,31 @@ export const usePlans = () => {
     }
   };
 
-  // Verificar se uma funcionalidade está disponível
-  const hasFeature = (feature: keyof Plan['features']): boolean => {
-    return currentPlan?.features[feature] || false;
-  };
+  const switchToPlan = async (planId: string): Promise<boolean> => {
+    if (!user?.empresaId) return false;
 
-  useEffect(() => {
-    fetchPlans();
-  }, []);
+    try {
+      // For now, just update the empresa's current_plan_id
+      // In a real implementation, this would involve payment processing
+      const { error } = await supabase
+        .from('empresas')
+        .update({ current_plan_id: planId })
+        .eq('id', user.empresaId);
 
-  useEffect(() => {
-    if (user?.empresaId) {
-      fetchCurrentSubscription();
+      if (error) throw error;
+
+      // Reload current subscription
+      const newPlan = plans.find(p => p.id === planId);
+      if (newPlan) {
+        setCurrentPlan(newPlan);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao trocar plano:', error);
+      return false;
     }
-  }, [user?.empresaId]);
+  };
 
   return {
     plans,
@@ -114,10 +157,6 @@ export const usePlans = () => {
     currentPlan,
     loading,
     checkPlanLimits,
-    hasFeature,
-    refetch: () => {
-      fetchPlans();
-      fetchCurrentSubscription();
-    }
+    switchToPlan
   };
 };

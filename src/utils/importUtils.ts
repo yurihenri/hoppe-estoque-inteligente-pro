@@ -1,4 +1,3 @@
-
 import Papa from 'papaparse';
 import { toast } from 'sonner';
 import { Produto, Categoria } from '@/types';
@@ -175,6 +174,43 @@ export const mapImportedToProducts = async (
 
     return produto;
   });
+};
+
+const processRow = (row: any, categorias: Categoria[]): Produto | null => {
+  try {
+    // Validações básicas
+    if (!row.nome || !row.preco || !row.quantidade) {
+      return null;
+    }
+
+    // Buscar categoria por nome
+    let categoriaId: string | undefined;
+    if (row.categoria) {
+      const categoria = categorias.find(c => 
+        c.nome.toLowerCase() === row.categoria.toLowerCase()
+      );
+      categoriaId = categoria?.id;
+    }
+
+    return {
+      id: crypto.randomUUID(),
+      nome: row.nome,
+      descricao: row.descricao || undefined,
+      preco: parseFloat(row.preco),
+      estoqueAtual: parseInt(row.quantidade),
+      estoqueMinimo: parseInt(row.estoque_minimo) || 0,
+      validade: row.validade ? new Date(row.validade).toISOString().split('T')[0] : undefined,
+      dataEntrada: row.data_entrada ? new Date(row.data_entrada).toISOString() : new Date().toISOString(),
+      codigoRastreio: row.codigo_rastreio || undefined,
+      categoriaId,
+      empresaId: '', // Will be set by the calling function
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+  } catch (error) {
+    console.error('Erro ao processar linha:', error);
+    return null;
+  }
 };
 
 export const importProdutos = async (produtos: Produto[]): Promise<boolean> => {

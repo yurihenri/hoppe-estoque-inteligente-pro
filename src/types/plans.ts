@@ -1,4 +1,14 @@
 
+export interface PlanFeatures {
+  reports: boolean;
+  exports: boolean;
+  integrations: boolean;
+  email_alerts: boolean;
+  app_notifications: boolean;
+  advanced_dashboard: boolean;
+  remove_branding: boolean;
+}
+
 export interface Plan {
   id: string;
   name: string;
@@ -6,15 +16,7 @@ export interface Plan {
   price_brl: number;
   max_products: number;
   max_users: number;
-  features: {
-    reports: boolean;
-    exports: boolean;
-    integrations: boolean;
-    email_alerts: boolean;
-    app_notifications: boolean;
-    advanced_dashboard: boolean;
-    remove_branding: boolean;
-  };
+  features: PlanFeatures;
   created_at: string;
 }
 
