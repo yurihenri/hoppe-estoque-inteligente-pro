@@ -78,7 +78,7 @@ const Register = () => {
 
   const onSubmit = async (data: RegisterData) => {
     try {
-      await register(data.email, data.password, data.nome, data.empresa);
+      await register(data);
       
       setIsSuccess(true);
       
