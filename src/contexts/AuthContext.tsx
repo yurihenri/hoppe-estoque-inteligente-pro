@@ -1,9 +1,9 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Usuario, Empresa } from '@/types';
 import { Plan, PlanFeatures } from '@/types/plans';
 import { Json } from '@/integrations/supabase/types';
+import { sanitizeEmail } from '@/utils/emailUtils';
 
 interface AuthContextType {
   user: Usuario | null;
@@ -148,27 +148,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const sanitizedEmail = sanitizeEmail(email);
-      console.log('Tentativa de login com email:', sanitizedEmail);
+      console.log('Tentativa de login com email sanitizado:', sanitizedEmail);
 
-      // Verificar se o email existe antes de tentar fazer login
-      const { data: profileCheck, error: profileError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', sanitizedEmail)
-        .maybeSingle();
-
-      if (profileError) {
-        console.error('Erro ao verificar perfil:', profileError);
-        throw new Error('Erro interno. Tente novamente.');
-      }
-
-      if (!profileCheck) {
-        console.log('Email não encontrado na base de dados:', sanitizedEmail);
-        throw new Error('Email não encontrado. Verifique seus dados ou cadastre-se.');
-      }
-
-      console.log('Email encontrado, tentando fazer login...');
-
+      // Primeiro, tentar fazer login diretamente
       const { data, error } = await supabase.auth.signInWithPassword({
         email: sanitizedEmail,
         password,
@@ -177,9 +159,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) {
         console.error('Erro de autenticação:', error);
         
-        // Mensagens de erro mais amigáveis
+        // Se falhar por credenciais inválidas, verificar se o perfil existe
         if (error.message.includes('Invalid login credentials')) {
-          throw new Error('Email ou senha incorretos. Verifique seus dados e tente novamente.');
+          console.log('Verificando se o perfil existe...');
+          
+          // Buscar perfil com diferentes variações do email
+          const { data: profileCheck, error: profileError } = await supabase
+            .from('profiles')
+            .select('email')
+            .or(`email.eq.${sanitizedEmail},email.ilike.${sanitizedEmail}`)
+            .maybeSingle();
+
+          if (profileError) {
+            console.error('Erro ao verificar perfil:', profileError);
+          }
+
+          if (profileCheck) {
+            console.log('Perfil encontrado:', profileCheck.email);
+            throw new Error('Email ou senha incorretos. Verifique seus dados e tente novamente.');
+          } else {
+            console.log('Perfil não encontrado. Listando alguns perfis para debug...');
+            
+            // Para debug: listar alguns perfis para verificar o formato dos emails
+            const { data: allProfiles, error: debugError } = await supabase
+              .from('profiles')
+              .select('email')
+              .limit(5);
+              
+            if (!debugError && allProfiles) {
+              console.log('Emails encontrados na base:', allProfiles.map(p => p.email));
+            }
+            
+            throw new Error('Email não encontrado. Verifique seus dados ou cadastre-se.');
+          }
         } else if (error.message.includes('Email not confirmed')) {
           throw new Error('Email não confirmado. Verifique sua caixa de entrada.');
         } else if (error.message.includes('Too many requests')) {
@@ -220,7 +232,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     try {
       const sanitizedEmail = sanitizeEmail(userData.email);
-      console.log('Tentativa de registro com email:', sanitizedEmail);
+      console.log('Tentativa de registro com email sanitizado:', sanitizedEmail);
 
       // Verificar se o email já está cadastrado
       const { data: existingProfile, error: checkError } = await supabase
