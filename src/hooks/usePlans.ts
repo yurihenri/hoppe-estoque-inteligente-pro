@@ -127,9 +127,19 @@ export const usePlans = () => {
 
       if (error) throw error;
 
-      // Safely convert the response to PlanLimits
-      if (data && typeof data === 'object' && 'allowed' in data) {
-        return data as PlanLimits;
+      // Type guard to safely check if data has the expected structure
+      if (data && typeof data === 'object' && data !== null && !Array.isArray(data)) {
+        const result = data as { [key: string]: any };
+        
+        // Check if the response has the required 'allowed' property
+        if ('allowed' in result && typeof result.allowed === 'boolean') {
+          return {
+            allowed: result.allowed,
+            reason: result.reason || undefined,
+            current: typeof result.current === 'number' ? result.current : undefined,
+            max: typeof result.max === 'number' ? result.max : undefined
+          };
+        }
       }
 
       return { allowed: false, reason: 'Resposta inválida do servidor' };
