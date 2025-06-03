@@ -72,7 +72,11 @@ const Login = () => {
 
   const onSubmit = async (data: Credentials) => {
     try {
-      await login(data.email, data.password);
+      // Sanitizar email antes de enviar
+      const sanitizedEmail = data.email.toLowerCase().trim();
+      console.log('Tentando fazer login com email sanitizado:', sanitizedEmail);
+      
+      await login(sanitizedEmail, data.password);
       
       // Salva preferência no secure storage
       if (rememberMe) {

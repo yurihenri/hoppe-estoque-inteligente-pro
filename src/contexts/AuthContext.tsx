@@ -27,6 +27,11 @@ export const useAuth = () => {
   return context;
 };
 
+// Helper function to sanitize email
+const sanitizeEmail = (email: string): string => {
+  return email.toLowerCase().trim();
+};
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<Usuario | null>(null);
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
@@ -142,11 +147,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     
     try {
+      const sanitizedEmail = sanitizeEmail(email);
+      console.log('Tentativa de login com email:', sanitizedEmail);
+
       // Verificar se o email existe antes de tentar fazer login
       const { data: profileCheck, error: profileError } = await supabase
         .from('profiles')
         .select('email')
-        .eq('email', email.toLowerCase().trim())
+        .eq('email', sanitizedEmail)
         .maybeSingle();
 
       if (profileError) {
@@ -155,11 +163,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!profileCheck) {
+        console.log('Email não encontrado na base de dados:', sanitizedEmail);
         throw new Error('Email não encontrado. Verifique seus dados ou cadastre-se.');
       }
 
+      console.log('Email encontrado, tentando fazer login...');
+
       const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.toLowerCase().trim(),
+        email: sanitizedEmail,
         password,
       });
       
@@ -181,6 +192,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (!data.user) {
         throw new Error('Falha na autenticação. Tente novamente.');
       }
+
+      console.log('Login realizado com sucesso!');
 
     } catch (error: any) {
       setError(error.message || 'Erro ao fazer login');
@@ -206,11 +219,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     
     try {
+      const sanitizedEmail = sanitizeEmail(userData.email);
+      console.log('Tentativa de registro com email:', sanitizedEmail);
+
       // Verificar se o email já está cadastrado
       const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
         .select('email')
-        .eq('email', userData.email.toLowerCase().trim())
+        .eq('email', sanitizedEmail)
         .maybeSingle();
 
       if (checkError) {
@@ -219,11 +235,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (existingProfile) {
+        console.log('Email já existe na base de dados:', sanitizedEmail);
         throw new Error('Este email já está cadastrado. Faça login ou use outro email.');
       }
 
       const { error } = await supabase.auth.signUp({
-        email: userData.email.toLowerCase().trim(),
+        email: sanitizedEmail,
         password: userData.password,
         options: {
           data: {
@@ -247,6 +264,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error('Erro ao criar conta. Tente novamente.');
         }
       }
+      
+      console.log('Registro realizado com sucesso!');
     } catch (error: any) {
       setError(error.message || 'Erro ao registrar usuário');
       throw error;

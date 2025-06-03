@@ -78,7 +78,15 @@ const Register = () => {
 
   const onSubmit = async (data: RegisterData) => {
     try {
-      await register(data);
+      // Sanitizar email antes de enviar
+      const sanitizedData = {
+        ...data,
+        email: data.email.toLowerCase().trim()
+      };
+      
+      console.log('Tentando registrar com email sanitizado:', sanitizedData.email);
+      
+      await register(sanitizedData);
       
       setIsSuccess(true);
       
