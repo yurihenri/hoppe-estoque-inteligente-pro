@@ -3,18 +3,18 @@ import { useEffect, useState } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
-import { RefreshCw, AlertCircle } from 'lucide-react';
+import { RefreshCw, AlertCircle, LogIn } from 'lucide-react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { user, isLoading, error } = useAuth();
+  const { user, isLoading, error, clearError } = useAuth();
   const location = useLocation();
   const [showTimeout, setShowTimeout] = useState(false);
 
-  // Timeout simples para mostrar opções se carregamento demorar
+  // Timeout para mostrar opções se carregamento demorar
   useEffect(() => {
     if (isLoading) {
       const timeoutId = setTimeout(() => {
@@ -29,6 +29,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
 
   const handleReload = () => {
     window.location.reload();
+  };
+
+  const handleGoToLogin = () => {
+    clearError();
+    window.location.href = '/login';
   };
 
   // Se há erro, mostra tela de erro
@@ -49,10 +54,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
               Tentar Novamente
             </Button>
             <Button 
-              onClick={() => window.location.href = '/login'}
+              onClick={handleGoToLogin}
               variant="outline"
               className="border-blue-300 text-blue-300 hover:bg-blue-800/30"
             >
+              <LogIn size={16} className="mr-2" />
               Fazer Login
             </Button>
           </div>
@@ -81,10 +87,11 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
               Recarregar
             </Button>
             <Button 
-              onClick={() => window.location.href = '/login'}
+              onClick={handleGoToLogin}
               variant="outline"
               className="border-blue-300 text-blue-300 hover:bg-blue-800/30"
             >
+              <LogIn size={16} className="mr-2" />
               Voltar ao Login
             </Button>
           </div>

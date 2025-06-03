@@ -66,7 +66,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (session?.user) {
         try {
-          // Fetch user profile with company and plan data
+          // Usar maybeSingle() em vez de single() para evitar erros com múltiplos registros
           const { data: profile, error } = await supabase
             .from('profiles')
             .select(`
@@ -77,38 +77,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
               )
             `)
             .eq('id', session.user.id)
-            .single();
+            .maybeSingle();
 
-          if (error) throw error;
-
-          if (profile) {
-            const userData: Usuario = {
-              id: profile.id,
-              nome: profile.nome,
-              email: profile.email,
-              empresaId: profile.empresa_id,
-              avatarUrl: profile.avatar_url,
-              cargo: profile.cargo,
-              createdAt: profile.created_at
-            };
-
-            const empresaData: Empresa = {
-              id: profile.empresa.id,
-              nome: profile.empresa.nome,
-              cnpj: profile.empresa.cnpj,
-              segmento: profile.empresa.segmento,
-              currentPlan: profile.empresa.current_plan ? {
-                ...profile.empresa.current_plan,
-                features: convertJsonToFeatures(profile.empresa.current_plan.features)
-              } as Plan : undefined
-            };
-
-            setUser(userData);
-            setEmpresa(empresaData);
+          if (error) {
+            console.error('Erro na query do perfil:', error);
+            throw new Error('Erro ao carregar dados do usuário. Tente fazer login novamente.');
           }
+
+          if (!profile) {
+            console.error('Perfil não encontrado para o usuário:', session.user.id);
+            setError('Perfil de usuário não encontrado. Entre em contato com o suporte.');
+            await supabase.auth.signOut();
+            return;
+          }
+
+          if (!profile.empresa) {
+            console.error('Empresa não encontrada para o usuário:', session.user.id);
+            setError('Dados da empresa não encontrados. Entre em contato com o suporte.');
+            await supabase.auth.signOut();
+            return;
+          }
+
+          const userData: Usuario = {
+            id: profile.id,
+            nome: profile.nome,
+            email: profile.email,
+            empresaId: profile.empresa_id,
+            avatarUrl: profile.avatar_url,
+            cargo: profile.cargo,
+            createdAt: profile.created_at
+          };
+
+          const empresaData: Empresa = {
+            id: profile.empresa.id,
+            nome: profile.empresa.nome,
+            cnpj: profile.empresa.cnpj,
+            segmento: profile.empresa.segmento,
+            currentPlan: profile.empresa.current_plan ? {
+              ...profile.empresa.current_plan,
+              features: convertJsonToFeatures(profile.empresa.current_plan.features)
+            } as Plan : undefined
+          };
+
+          setUser(userData);
+          setEmpresa(empresaData);
         } catch (error: any) {
           console.error('Erro ao carregar dados do usuário:', error);
           setError(error.message || 'Erro ao carregar dados do usuário');
+          // Fazer logout em caso de erro crítico
+          await supabase.auth.signOut();
         }
       } else {
         setUser(null);
@@ -122,16 +139,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const login = async (email: string, password: string) => {
     setError(null);
+    setLoading(true);
+    
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      // Verificar se o email existe antes de tentar fazer login
+      const { data: profileCheck, error: profileError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Erro ao verificar perfil:', profileError);
+        throw new Error('Erro interno. Tente novamente.');
+      }
+
+      if (!profileCheck) {
+        throw new Error('Email não encontrado. Verifique seus dados ou cadastre-se.');
+      }
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro de autenticação:', error);
+        
+        // Mensagens de erro mais amigáveis
+        if (error.message.includes('Invalid login credentials')) {
+          throw new Error('Email ou senha incorretos. Verifique seus dados e tente novamente.');
+        } else if (error.message.includes('Email not confirmed')) {
+          throw new Error('Email não confirmado. Verifique sua caixa de entrada.');
+        } else if (error.message.includes('Too many requests')) {
+          throw new Error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
+        } else {
+          throw new Error('Erro ao fazer login. Tente novamente.');
+        }
+      }
+
+      if (!data.user) {
+        throw new Error('Falha na autenticação. Tente novamente.');
+      }
+
     } catch (error: any) {
       setError(error.message || 'Erro ao fazer login');
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -148,19 +203,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const register = async (userData: any) => {
     setError(null);
+    setLoading(true);
+    
     try {
+      // Verificar se o email já está cadastrado
+      const { data: existingProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('email', userData.email.toLowerCase().trim())
+        .maybeSingle();
+
+      if (checkError) {
+        console.error('Erro ao verificar email existente:', checkError);
+        throw new Error('Erro interno. Tente novamente.');
+      }
+
+      if (existingProfile) {
+        throw new Error('Este email já está cadastrado. Faça login ou use outro email.');
+      }
+
       const { error } = await supabase.auth.signUp({
-        email: userData.email,
+        email: userData.email.toLowerCase().trim(),
         password: userData.password,
         options: {
-          data: userData
+          data: {
+            nome: userData.nome,
+            empresa: userData.empresa
+          }
         }
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Erro no registro:', error);
+        
+        // Mensagens de erro mais amigáveis para registro
+        if (error.message.includes('User already registered')) {
+          throw new Error('Este email já está cadastrado. Faça login ou use outro email.');
+        } else if (error.message.includes('Password should be at least')) {
+          throw new Error('A senha deve ter pelo menos 6 caracteres.');
+        } else if (error.message.includes('Invalid email')) {
+          throw new Error('Email inválido. Verifique o formato do email.');
+        } else {
+          throw new Error('Erro ao criar conta. Tente novamente.');
+        }
+      }
     } catch (error: any) {
       setError(error.message || 'Erro ao registrar usuário');
       throw error;
+    } finally {
+      setLoading(false);
     }
   };
 
