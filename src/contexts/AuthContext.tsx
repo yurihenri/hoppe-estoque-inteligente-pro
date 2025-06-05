@@ -35,36 +35,91 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (session?.user) {
         try {
-          // Usar maybeSingle() em vez de single() para evitar erros com múltiplos registros
-          const { data: profile, error } = await supabase
+          console.log('Buscando perfil para usuário:', session.user.id);
+          
+          // Primeiro, verificar se o perfil existe
+          const { data: profile, error: profileError } = await supabase
             .from('profiles')
-            .select(`
-              *,
-              empresa:empresas!inner(
-                *,
-                current_plan:plans(*)
-              )
-            `)
+            .select('*')
             .eq('id', session.user.id)
             .maybeSingle();
 
-          if (error) {
-            console.error('Erro na query do perfil:', error);
-            throw new Error('Erro ao carregar dados do usuário. Tente fazer login novamente.');
+          if (profileError) {
+            console.error('Erro ao buscar perfil:', profileError);
+            throw new Error('Erro ao carregar perfil do usuário.');
           }
 
           if (!profile) {
             console.error('Perfil não encontrado para o usuário:', session.user.id);
-            setError('Perfil de usuário não encontrado. Entre em contato com o suporte.');
-            await supabase.auth.signOut();
+            console.log('Verificando se o usuário existe na auth...');
+            
+            // Tentar criar o perfil se não existir
+            const { data: newProfile, error: createError } = await supabase
+              .from('profiles')
+              .insert({
+                id: session.user.id,
+                email: session.user.email,
+                nome: session.user.user_metadata?.nome || session.user.email?.split('@')[0] || 'Usuário'
+              })
+              .select()
+              .single();
+
+            if (createError) {
+              console.error('Erro ao criar perfil:', createError);
+              setError('Erro ao criar perfil de usuário. Entre em contato com o suporte.');
+              await supabase.auth.signOut();
+              return;
+            }
+
+            console.log('Perfil criado com sucesso:', newProfile);
+            
+            // Usar o perfil recém-criado
+            const userData: Usuario = {
+              id: newProfile.id,
+              nome: newProfile.nome,
+              email: newProfile.email,
+              empresaId: newProfile.empresa_id,
+              avatarUrl: newProfile.avatar_url,
+              cargo: newProfile.cargo,
+              createdAt: newProfile.created_at
+            };
+
+            setUser(userData);
+            setEmpresa(null); // Sem empresa ainda
+            setLoading(false);
             return;
           }
 
-          if (!profile.empresa) {
-            console.error('Empresa não encontrada para o usuário:', session.user.id);
-            setError('Dados da empresa não encontrados. Entre em contato com o suporte.');
-            await supabase.auth.signOut();
-            return;
+          console.log('Perfil encontrado:', profile);
+
+          // Se tem empresa_id, buscar dados da empresa
+          if (profile.empresa_id) {
+            const { data: empresa, error: empresaError } = await supabase
+              .from('empresas')
+              .select(`
+                *,
+                current_plan:plans(*)
+              `)
+              .eq('id', profile.empresa_id)
+              .maybeSingle();
+
+            if (empresaError) {
+              console.error('Erro ao buscar empresa:', empresaError);
+            }
+
+            if (empresa) {
+              const empresaData: Empresa = {
+                id: empresa.id,
+                nome: empresa.nome,
+                cnpj: empresa.cnpj,
+                segmento: empresa.segmento,
+                currentPlan: empresa.current_plan ? {
+                  ...empresa.current_plan,
+                  features: convertJsonToFeatures(empresa.current_plan.features)
+                } as Plan : undefined
+              };
+              setEmpresa(empresaData);
+            }
           }
 
           const userData: Usuario = {
@@ -77,19 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             createdAt: profile.created_at
           };
 
-          const empresaData: Empresa = {
-            id: profile.empresa.id,
-            nome: profile.empresa.nome,
-            cnpj: profile.empresa.cnpj,
-            segmento: profile.empresa.segmento,
-            currentPlan: profile.empresa.current_plan ? {
-              ...profile.empresa.current_plan,
-              features: convertJsonToFeatures(profile.empresa.current_plan.features)
-            } as Plan : undefined
-          };
-
           setUser(userData);
-          setEmpresa(empresaData);
         } catch (error: any) {
           console.error('Erro ao carregar dados do usuário:', error);
           setError(error.message || 'Erro ao carregar dados do usuário');
