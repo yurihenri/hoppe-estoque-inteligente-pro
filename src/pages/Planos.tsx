@@ -3,207 +3,234 @@ import { useState, useEffect } from 'react';
 import Layout from '@/components/layout/Layout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { PlanBadge } from '@/components/plans/PlanBadge';
-import { PlanLimits } from '@/components/plans/PlanLimits';
-import { usePlans } from '@/hooks/usePlans';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Check, Crown, Zap } from 'lucide-react';
+import { Check, Package, Users, Bell, Zap, Mail, MessageCircle, Crown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Planos = () => {
   const { user } = useAuth();
-  const { plans, currentPlan, loading } = usePlans();
-  const [currentProducts, setCurrentProducts] = useState(0);
-  const [currentUsers, setCurrentUsers] = useState(0);
-  const [loadingStats, setLoadingStats] = useState(true);
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      if (!user?.empresaId) return;
+  const handleSelectFreePlan = async () => {
+    if (!user) {
+      // Redirect to register with free plan
+      navigate('/register?plan=free');
+      return;
+    }
 
-      try {
-        // Contar produtos
-        const { count: productsCount, error: productsError } = await supabase
-          .from('produtos')
-          .select('*', { count: 'exact', head: true })
-          .eq('empresa_id', user.empresaId);
-
-        if (productsError) throw productsError;
-
-        // Contar usuários
-        const { count: usersCount, error: usersError } = await supabase
-          .from('profiles')
-          .select('*', { count: 'exact', head: true })
-          .eq('empresa_id', user.empresaId);
-
-        if (usersError) throw usersError;
-
-        setCurrentProducts(productsCount || 0);
-        setCurrentUsers(usersCount || 0);
-      } catch (error) {
-        console.error('Erro ao buscar estatísticas:', error);
-        toast.error('Erro ao carregar estatísticas de uso');
-      } finally {
-        setLoadingStats(false);
-      }
-    };
-
-    fetchStats();
-  }, [user?.empresaId]);
-
-  const handleUpgradePlan = async (planId: string) => {
-    if (!user?.empresaId) return;
-
+    setLoading(true);
     try {
+      // Update user's company plan to free
       const { error } = await supabase
         .from('empresas')
-        .update({ current_plan_id: planId })
+        .update({ current_plan_id: null }) // Free plan has no plan_id
         .eq('id', user.empresaId);
 
       if (error) throw error;
 
-      toast.success('Plano atualizado com sucesso!');
-      // Recarregar a página para atualizar o contexto
-      window.location.reload();
+      toast.success('Plano gratuito ativado com sucesso!');
     } catch (error) {
-      console.error('Erro ao atualizar plano:', error);
-      toast.error('Erro ao atualizar plano');
+      console.error('Erro ao ativar plano gratuito:', error);
+      toast.error('Erro ao ativar plano gratuito');
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading || loadingStats) {
-    return (
-      <Layout title="Planos">
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <h3 className="text-lg font-semibold">Carregando...</h3>
-          </div>
-        </div>
-      </Layout>
-    );
-  }
+  const handleSelectProPlan = async () => {
+    if (!user) {
+      // Redirect to register with pro plan
+      navigate('/register?plan=pro');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Here you would integrate with Stripe for payment
+      // For now, we'll just show a message
+      toast.info('Redirecionando para checkout de pagamento...');
+      
+      // TODO: Integrate with Stripe checkout
+      // const response = await fetch('/api/create-checkout-session', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ planType: 'pro' })
+      // });
+      
+    } catch (error) {
+      console.error('Erro ao processar pagamento:', error);
+      toast.error('Erro ao processar pagamento');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Layout title="Planos">
-      <div className="container mx-auto py-6 space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Planos</h1>
-          {currentPlan && <PlanBadge plan={currentPlan} />}
+      <div className="container mx-auto py-8 px-4">
+        {/* Header */}
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Escolha o plano ideal para sua empresa
+          </h1>
+          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+            Gerencie seu estoque de forma inteligente com nossos planos flexíveis
+          </p>
         </div>
 
-        {currentPlan && (
-          <PlanLimits 
-            plan={currentPlan} 
-            currentProducts={currentProducts}
-            currentUsers={currentUsers}
-          />
-        )}
+        {/* Plans Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          {/* Free Plan */}
+          <Card className="relative border-2 border-gray-200 hover:border-blue-300 transition-all duration-300 hover:shadow-lg">
+            <CardHeader className="text-center pb-8">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                  <Zap className="h-8 w-8 text-blue-600" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900">Plano Gratuito</CardTitle>
+              <div className="mt-4">
+                <span className="text-4xl font-bold text-gray-900">R$ 0,00</span>
+                <span className="text-gray-600 ml-2">/ mês</span>
+              </div>
+              <p className="text-gray-600 mt-2">Perfeito para começar</p>
+            </CardHeader>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {plans.map((plan) => {
-            const isCurrentPlan = currentPlan?.id === plan.id;
-            const isPro = plan.type === 'pro';
-
-            return (
-              <Card key={plan.id} className={`relative ${isCurrentPlan ? 'ring-2 ring-blue-500' : ''}`}>
-                {isCurrentPlan && (
-                  <Badge className="absolute -top-2 left-4 bg-blue-500">
-                    Plano Atual
-                  </Badge>
-                )}
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">Cadastro de até 50 produtos</span>
+                  </div>
+                </div>
                 
-                <CardHeader className="text-center">
-                  <div className="flex items-center justify-center mb-2">
-                    {isPro ? <Crown className="h-8 w-8 text-yellow-500" /> : <Zap className="h-8 w-8 text-blue-500" />}
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">1 usuário administrador</span>
                   </div>
-                  <CardTitle className="text-xl">{plan.name}</CardTitle>
-                  <div className="text-2xl font-bold">
-                    {plan.price_brl > 0 ? (
-                      <>
-                        R$ {plan.price_brl.toFixed(2)}
-                        <span className="text-sm font-normal text-gray-600">/mês</span>
-                      </>
-                    ) : (
-                      'Gratuito'
-                    )}
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">Alertas de vencimento limitados (5/mês)</span>
                   </div>
-                </CardHeader>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-gray-500" />
+                    <span className="text-gray-700">Suporte básico via e-mail</span>
+                  </div>
+                </div>
+              </div>
 
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2">
-                      <Check size={16} className="text-green-500" />
-                      <span className="text-sm">Até {plan.max_products} produtos</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Check size={16} className="text-green-500" />
-                      <span className="text-sm">Até {plan.max_users} usuário(s)</span>
-                    </div>
-                    {plan.features.email_alerts && (
-                      <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-500" />
-                        <span className="text-sm">Alertas por e-mail</span>
-                      </div>
-                    )}
-                    {plan.features.app_notifications && (
-                      <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-500" />
-                        <span className="text-sm">Notificações no app</span>
-                      </div>
-                    )}
-                    {plan.features.reports && (
-                      <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-500" />
-                        <span className="text-sm">Relatórios avançados</span>
-                      </div>
-                    )}
-                    {plan.features.exports && (
-                      <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-500" />
-                        <span className="text-sm">Exportação CSV</span>
-                      </div>
-                    )}
-                    {plan.features.advanced_dashboard && (
-                      <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-500" />
-                        <span className="text-sm">Dashboard avançado</span>
-                      </div>
-                    )}
-                    {plan.features.integrations && (
-                      <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-500" />
-                        <span className="text-sm">Integrações externas</span>
-                      </div>
-                    )}
-                    {plan.features.remove_branding && (
-                      <div className="flex items-center gap-2">
-                        <Check size={16} className="text-green-500" />
-                        <span className="text-sm">Sem marca "Powered by Hoppe"</span>
-                      </div>
-                    )}
-                  </div>
+              <Button 
+                className="w-full h-12 text-lg font-semibold"
+                variant="outline"
+                onClick={handleSelectFreePlan}
+                disabled={loading}
+              >
+                Começar agora
+              </Button>
+            </CardContent>
+          </Card>
 
-                  <Button 
-                    className="w-full"
-                    variant={isCurrentPlan ? "outline" : "default"}
-                    disabled={isCurrentPlan}
-                    onClick={() => handleUpgradePlan(plan.id)}
-                  >
-                    {isCurrentPlan ? "Plano Atual" : isPro ? "Fazer Upgrade" : "Selecionar Plano"}
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {/* Pro Plan */}
+          <Card className="relative border-2 border-blue-500 hover:border-blue-600 transition-all duration-300 hover:shadow-xl shadow-lg">
+            {/* Popular Badge */}
+            <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+              <div className="bg-blue-500 text-white px-6 py-2 rounded-full text-sm font-semibold">
+                Mais Popular
+              </div>
+            </div>
+
+            <CardHeader className="text-center pb-8 pt-8">
+              <div className="flex justify-center mb-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
+                  <Crown className="h-8 w-8 text-white" />
+                </div>
+              </div>
+              <CardTitle className="text-2xl font-bold text-gray-900">Plano Profissional</CardTitle>
+              <div className="mt-4">
+                <span className="text-4xl font-bold text-blue-600">R$ 39,90</span>
+                <span className="text-gray-600 ml-2">/ mês</span>
+              </div>
+              <p className="text-gray-600 mt-2">Para empresas em crescimento</p>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-blue-500" />
+                    <span className="text-gray-700 font-medium">Cadastro ilimitado de produtos</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-blue-500" />
+                    <span className="text-gray-700 font-medium">Até 3 usuários simultâneos</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Bell className="h-4 w-4 text-blue-500" />
+                    <span className="text-gray-700 font-medium">Alertas de vencimento ilimitados</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-blue-500" />
+                    <span className="text-gray-700 font-medium">Integração com APIs externas</span>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-3">
+                  <Check className="h-5 w-5 text-green-500 flex-shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <MessageCircle className="h-4 w-4 text-blue-500" />
+                    <span className="text-gray-700 font-medium">Suporte por e-mail e WhatsApp</span>
+                  </div>
+                </div>
+              </div>
+
+              <Button 
+                className="w-full h-12 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
+                onClick={handleSelectProPlan}
+                disabled={loading}
+              >
+                Assinar plano
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
-        {!currentPlan?.features.remove_branding && (
-          <div className="text-center py-4 border-t">
-            <p className="text-sm text-gray-500">Powered by Hoppe</p>
-          </div>
-        )}
+        {/* Footer */}
+        <div className="text-center mt-12">
+          <p className="text-gray-600 mb-4">
+            Todos os planos incluem segurança de dados e atualizações automáticas
+          </p>
+          <p className="text-sm text-gray-500">
+            Powered by Hoppe - Gestão Inteligente de Estoque
+          </p>
+        </div>
       </div>
     </Layout>
   );
