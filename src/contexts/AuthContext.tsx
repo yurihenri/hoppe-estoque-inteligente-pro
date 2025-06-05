@@ -27,11 +27,6 @@ export const useAuth = () => {
   return context;
 };
 
-// Helper function to sanitize email
-const sanitizeEmail = (email: string): string => {
-  return email.toLowerCase().trim();
-};
-
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<Usuario | null>(null);
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
