@@ -1,21 +1,11 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { Usuario, Empresa } from '@/types';
-import { Plan, PlanFeatures } from '@/types/plans';
-import { Json } from '@/integrations/supabase/types';
-import { sanitizeEmail } from '@/utils/emailUtils';
-
-interface AuthContextType {
-  user: Usuario | null;
-  empresa: Empresa | null;
-  loading: boolean;
-  isLoading: boolean; // Alias for loading
-  error: string | null;
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
-  register: (userData: any) => Promise<void>;
-  clearError: () => void;
-}
+import { Plan } from '@/types/plans';
+import { AuthContextType } from './auth/types';
+import { convertJsonToFeatures } from './auth/utils';
+import { useAuthLogin, useAuthRegister, useAuthLogout } from './auth/hooks';
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
@@ -33,32 +23,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const clearError = () => setError(null);
+  const { login: loginHook } = useAuthLogin();
+  const { register: registerHook } = useAuthRegister();
+  const { logout: logoutHook } = useAuthLogout();
 
-  // Helper function to convert Json to PlanFeatures
-  const convertJsonToFeatures = (features: Json): PlanFeatures => {
-    if (typeof features === 'object' && features !== null && !Array.isArray(features)) {
-      const obj = features as { [key: string]: any };
-      return {
-        reports: obj.reports || false,
-        exports: obj.exports || false,
-        integrations: obj.integrations || false,
-        email_alerts: obj.email_alerts || true,
-        app_notifications: obj.app_notifications || false,
-        advanced_dashboard: obj.advanced_dashboard || false,
-        remove_branding: obj.remove_branding || false
-      };
-    }
-    return {
-      reports: false,
-      exports: false,
-      integrations: false,
-      email_alerts: true,
-      app_notifications: false,
-      advanced_dashboard: false,
-      remove_branding: false
-    };
-  };
+  const clearError = () => setError(null);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
@@ -142,66 +111,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     
     try {
-      const sanitizedEmail = sanitizeEmail(email);
-      console.log('Tentativa de login com email sanitizado:', sanitizedEmail);
-
-      // Primeiro, tentar fazer login diretamente
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: sanitizedEmail,
-        password,
-      });
-      
-      if (error) {
-        console.error('Erro de autenticação:', error);
-        
-        // Se falhar por credenciais inválidas, verificar se o perfil existe
-        if (error.message.includes('Invalid login credentials')) {
-          console.log('Verificando se o perfil existe...');
-          
-          // Buscar perfil com diferentes variações do email
-          const { data: profileCheck, error: profileError } = await supabase
-            .from('profiles')
-            .select('email')
-            .or(`email.eq.${sanitizedEmail},email.ilike.${sanitizedEmail}`)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error('Erro ao verificar perfil:', profileError);
-          }
-
-          if (profileCheck) {
-            console.log('Perfil encontrado:', profileCheck.email);
-            throw new Error('Email ou senha incorretos. Verifique seus dados e tente novamente.');
-          } else {
-            console.log('Perfil não encontrado. Listando alguns perfis para debug...');
-            
-            // Para debug: listar alguns perfis para verificar o formato dos emails
-            const { data: allProfiles, error: debugError } = await supabase
-              .from('profiles')
-              .select('email')
-              .limit(5);
-              
-            if (!debugError && allProfiles) {
-              console.log('Emails encontrados na base:', allProfiles.map(p => p.email));
-            }
-            
-            throw new Error('Email não encontrado. Verifique seus dados ou cadastre-se.');
-          }
-        } else if (error.message.includes('Email not confirmed')) {
-          throw new Error('Email não confirmado. Verifique sua caixa de entrada.');
-        } else if (error.message.includes('Too many requests')) {
-          throw new Error('Muitas tentativas de login. Aguarde alguns minutos e tente novamente.');
-        } else {
-          throw new Error('Erro ao fazer login. Tente novamente.');
-        }
-      }
-
-      if (!data.user) {
-        throw new Error('Falha na autenticação. Tente novamente.');
-      }
-
-      console.log('Login realizado com sucesso!');
-
+      await loginHook(email, password);
     } catch (error: any) {
       setError(error.message || 'Erro ao fazer login');
       throw error;
@@ -213,8 +123,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const logout = async () => {
     setError(null);
     try {
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
+      await logoutHook();
     } catch (error: any) {
       setError(error.message || 'Erro ao fazer logout');
       throw error;
@@ -226,53 +135,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setLoading(true);
     
     try {
-      const sanitizedEmail = sanitizeEmail(userData.email);
-      console.log('Tentativa de registro com email sanitizado:', sanitizedEmail);
-
-      // Verificar se o email já está cadastrado
-      const { data: existingProfile, error: checkError } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('email', sanitizedEmail)
-        .maybeSingle();
-
-      if (checkError) {
-        console.error('Erro ao verificar email existente:', checkError);
-        throw new Error('Erro interno. Tente novamente.');
-      }
-
-      if (existingProfile) {
-        console.log('Email já existe na base de dados:', sanitizedEmail);
-        throw new Error('Este email já está cadastrado. Faça login ou use outro email.');
-      }
-
-      const { error } = await supabase.auth.signUp({
-        email: sanitizedEmail,
-        password: userData.password,
-        options: {
-          data: {
-            nome: userData.nome,
-            empresa: userData.empresa
-          }
-        }
-      });
-      
-      if (error) {
-        console.error('Erro no registro:', error);
-        
-        // Mensagens de erro mais amigáveis para registro
-        if (error.message.includes('User already registered')) {
-          throw new Error('Este email já está cadastrado. Faça login ou use outro email.');
-        } else if (error.message.includes('Password should be at least')) {
-          throw new Error('A senha deve ter pelo menos 6 caracteres.');
-        } else if (error.message.includes('Invalid email')) {
-          throw new Error('Email inválido. Verifique o formato do email.');
-        } else {
-          throw new Error('Erro ao criar conta. Tente novamente.');
-        }
-      }
-      
-      console.log('Registro realizado com sucesso!');
+      await registerHook(userData);
     } catch (error: any) {
       setError(error.message || 'Erro ao registrar usuário');
       throw error;
