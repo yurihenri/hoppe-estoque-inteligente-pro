@@ -45,14 +45,14 @@ const Sidebar = () => {
   };
 
   return (
-    <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${
+    <div className={`bg-slate-800/80 backdrop-blur-sm border-r border-slate-700 transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
     } flex flex-col h-full`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 border-b border-slate-700 flex items-center justify-between">
         {!isCollapsed && (
           <div>
-            <h1 className="text-xl font-bold text-hoppe-600">Hoppe</h1>
+            <h1 className="text-xl font-bold text-white">Hoppe</h1>
             {currentPlan && (
               <PlanBadge plan={currentPlan} className="mt-1" />
             )}
@@ -62,6 +62,7 @@ const Sidebar = () => {
           variant="ghost"
           size="sm"
           onClick={() => setIsCollapsed(!isCollapsed)}
+          className="text-white hover:bg-slate-700/50"
         >
           {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </Button>
@@ -77,10 +78,10 @@ const Sidebar = () => {
               <li key={item.path}>
                 <NavLink
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
                     isActive
-                      ? 'bg-hoppe-100 text-hoppe-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
+                      : 'text-slate-300 hover:bg-slate-700/50 hover:text-white'
                   }`}
                 >
                   <item.icon size={20} />
@@ -93,18 +94,18 @@ const Sidebar = () => {
       </nav>
 
       {/* User info and logout */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-slate-700">
         {!isCollapsed && user && (
           <div className="mb-3">
-            <p className="text-sm font-medium text-gray-900">{user.nome}</p>
-            <p className="text-xs text-gray-500">{user.email}</p>
+            <p className="text-sm font-medium text-white">{user.nome}</p>
+            <p className="text-xs text-slate-400">{user.email}</p>
           </div>
         )}
         <Button
           variant="ghost"
           size="sm"
           onClick={handleLogout}
-          className={`w-full ${isCollapsed ? 'justify-center' : 'justify-start'}`}
+          className={`w-full text-slate-300 hover:bg-slate-700/50 hover:text-white ${isCollapsed ? 'justify-center' : 'justify-start'}`}
         >
           <LogOut size={16} />
           {!isCollapsed && <span className="ml-2">Sair</span>}
@@ -113,8 +114,8 @@ const Sidebar = () => {
 
       {/* Powered by Hoppe */}
       {!currentPlan?.features.remove_branding && !isCollapsed && (
-        <div className="p-4 border-t border-gray-200">
-          <p className="text-xs text-gray-400 text-center">Powered by Hoppe</p>
+        <div className="p-4 border-t border-slate-700">
+          <p className="text-xs text-slate-500 text-center">Powered by Hoppe</p>
         </div>
       )}
     </div>
