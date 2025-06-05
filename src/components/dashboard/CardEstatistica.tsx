@@ -25,15 +25,20 @@ const CardEstatistica: React.FC<CardEstatisticaProps> = ({
   className,
 }) => {
   return (
-    <Card className={cn("card-stats", className)}>
+    <Card className={cn(
+      "bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm",
+      "hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105",
+      "shadow-lg hover:shadow-xl hover:shadow-blue-500/20",
+      className
+    )}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-slate-200">{titulo}</CardTitle>
+        <CardTitle className="text-sm font-medium text-gray-200">{titulo}</CardTitle>
         <div className={cn("p-2 rounded-full", corIcone)}>{icone}</div>
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold text-white">{valor}</div>
         {descricao && (
-          <p className="text-xs text-slate-400 mt-1">{descricao}</p>
+          <p className="text-xs text-gray-400 mt-1">{descricao}</p>
         )}
         {tendencia && porcentagemMudanca !== undefined && (
           <div className="flex items-center mt-2">
@@ -48,7 +53,7 @@ const CardEstatistica: React.FC<CardEstatisticaProps> = ({
               {tendencia === "aumento" ? "+" : "-"}
               {porcentagemMudanca}%
             </span>
-            <span className="text-xs text-slate-400 ml-1">desde o último mês</span>
+            <span className="text-xs text-gray-400 ml-1">desde o último mês</span>
           </div>
         )}
       </CardContent>

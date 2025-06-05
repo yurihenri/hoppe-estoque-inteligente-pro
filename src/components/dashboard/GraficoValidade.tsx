@@ -40,14 +40,14 @@ const GraficoValidade: React.FC = () => {
         { status: "Normal", quantidade: normais, cor: "#10B981" },
         { status: "Próximo ao Vencimento", quantidade: proximosAoVencimento, cor: "#F59E0B" },
         { status: "Vencido", quantidade: vencidos, cor: "#EF4444" },
-        { status: "Sem Data", quantidade: semData, cor: "#9CA3AF" }
+        { status: "Sem Data", quantidade: semData, cor: "#64748B" }
       ].filter(item => item.quantidade > 0);
     }
   });
 
   const renderPlaceholderData = () => {
     return [
-      { status: "Carregando...", quantidade: 1, cor: "#CBD5E1" }
+      { status: "Carregando...", quantidade: 1, cor: "#64748B" }
     ];
   };
 
@@ -56,9 +56,9 @@ const GraficoValidade: React.FC = () => {
     : distribuicaoValidade;
 
   return (
-    <Card className="col-span-1 card-stats">
+    <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
       <CardHeader>
-        <CardTitle className="text-lg">Status de Validade</CardTitle>
+        <CardTitle className="text-lg text-white">Status de Validade</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-center pt-4">
         <div className="h-[300px] w-full">
@@ -86,9 +86,16 @@ const GraficoValidade: React.FC = () => {
               </Pie>
               <Tooltip 
                 formatter={(value: number, name: string) => [`${value} itens`, name]}
-                contentStyle={{ borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                contentStyle={{ 
+                  backgroundColor: '#1E293B', 
+                  border: '1px solid #334155', 
+                  borderRadius: '0.5rem',
+                  color: '#F8FAFC'
+                }}
               />
-              <Legend />
+              <Legend 
+                wrapperStyle={{ color: '#F8FAFC' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

@@ -39,7 +39,7 @@ const GraficoCategorias: React.FC = () => {
 
   const renderPlaceholderData = () => {
     return [
-      { categoria: "Carregando...", quantidade: 1, cor: "#CBD5E1" }
+      { categoria: "Carregando...", quantidade: 1, cor: "#64748B" }
     ];
   };
 
@@ -48,9 +48,9 @@ const GraficoCategorias: React.FC = () => {
     : distribuicaoCategorias;
 
   return (
-    <Card className="col-span-1 card-stats">
+    <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
       <CardHeader>
-        <CardTitle className="text-lg">Distribuição por Categorias</CardTitle>
+        <CardTitle className="text-lg text-white">Distribuição por Categorias</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-center pt-4">
         <div className="h-[300px] w-full">
@@ -78,9 +78,16 @@ const GraficoCategorias: React.FC = () => {
               </Pie>
               <Tooltip 
                 formatter={(value: number, name: string) => [`${value} produtos`, name]}
-                contentStyle={{ borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
+                contentStyle={{ 
+                  backgroundColor: '#1E293B', 
+                  border: '1px solid #334155', 
+                  borderRadius: '0.5rem',
+                  color: '#F8FAFC'
+                }}
               />
-              <Legend />
+              <Legend 
+                wrapperStyle={{ color: '#F8FAFC' }}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
