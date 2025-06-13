@@ -2,6 +2,7 @@
 import React from "react";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import { ValidityAlertPopup } from "@/components/alerts/ValidityAlertPopup";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,6 +12,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children, title }) => {
   return (
     <div className="flex h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 overflow-hidden">
+      <ValidityAlertPopup />
       <Sidebar />
       <div className="flex flex-col flex-1 overflow-hidden">
         <Header title={title} />

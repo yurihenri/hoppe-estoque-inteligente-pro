@@ -1,4 +1,3 @@
-
 import React from "react";
 import Layout from "@/components/layout/Layout";
 import CardEstatistica from "@/components/dashboard/CardEstatistica";
@@ -7,12 +6,14 @@ import GraficoValidade from "@/components/dashboard/GraficoValidade";
 import ListaAlertas from "@/components/dashboard/ListaAlertas";
 import { ListaProdutos } from "@/components/dashboard/ListaProdutos";
 import { Package, AlertTriangle, Trash2, RefreshCw } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter } from "date-fns";
 import { Button } from "@/components/ui/button";
 
 const Dashboard: React.FC = () => {
+  const queryClient = useQueryClient();
+
   // Fetch dashboard statistics with better error handling
   const { data: dashboardStats, isLoading, error, refetch } = useQuery({
     queryKey: ['dashboardStats'],
@@ -59,6 +60,9 @@ const Dashboard: React.FC = () => {
         produtosEstoqueBaixo,
         produtosSemCategoria
       };
+      
+      // Invalidar cache dos alertas quando os dados do dashboard são atualizados
+      queryClient.invalidateQueries({ queryKey: ['validityAlerts'] });
       
       return stats;
     },
