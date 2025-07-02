@@ -13,11 +13,11 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
   const { totalAlerts, isLoading } = useValidityAlerts();
 
   return (
-    <header className="flex items-center justify-between p-4 border-b border-slate-700 bg-slate-800/50 backdrop-blur-sm">
-      <h1 className="text-2xl font-semibold text-white">{title}</h1>
+    <header className="flex items-center justify-between p-4 border-b border-gray-200 bg-white">
+      <h1 className="text-2xl font-semibold text-gray-900">{title}</h1>
       
       <div className="flex items-center space-x-4">
-        <Button variant="outline" size="icon" className="relative bg-slate-700/50 border-slate-600 text-white hover:bg-slate-600/50">
+        <Button variant="outline" size="icon" className="relative">
           <Bell size={20} />
           {!isLoading && totalAlerts > 0 && (
             <Badge

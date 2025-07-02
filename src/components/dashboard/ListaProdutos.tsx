@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,35 +85,35 @@ export const ListaProdutos: React.FC = () => {
     (produto.validade && format(new Date(produto.validade), 'dd/MM/yyyy').includes(searchTerm))
   ) || [];
 
-  if (isLoading) return <div className="p-4 text-white">Carregando produtos...</div>;
-  if (error) return <div className="p-4 text-red-400">Erro ao carregar produtos</div>;
+  if (isLoading) return <div className="p-4 text-gray-600">Carregando produtos...</div>;
+  if (error) return <div className="p-4 text-red-600">Erro ao carregar produtos</div>;
 
   return (
     <div className="space-y-4">
-      {/* Barra de busca aprimorada */}
+      {/* Barra de busca */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400" size={18} />
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
         <Input
           type="text"
           placeholder="Buscar por nome, categoria, código ou data de validade..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10 w-full input-dark"
+          className="pl-10 w-full"
         />
       </div>
       
-      <div className="rounded-md border border-slate-700 overflow-hidden">
-        <Table className="table-dark">
-          <TableHeader className="sticky top-0 bg-slate-800">
-            <TableRow className="border-slate-700">
-              <TableHead className="text-slate-200">Nome</TableHead>
-              <TableHead className="text-slate-200">Categoria</TableHead>
-              <TableHead className="text-right text-slate-200">Preço</TableHead>
-              <TableHead className="text-center text-slate-200">Estoque</TableHead>
-              <TableHead className="text-center text-slate-200">Status Estoque</TableHead>
-              <TableHead className="text-center text-slate-200">Validade</TableHead>
-              <TableHead className="text-center text-slate-200">Status</TableHead>
-              <TableHead className="text-center text-slate-200">Ações</TableHead>
+      <div className="rounded-md border border-gray-200 overflow-hidden">
+        <Table>
+          <TableHeader className="sticky top-0 bg-gray-50">
+            <TableRow className="border-gray-200">
+              <TableHead className="text-gray-700">Nome</TableHead>
+              <TableHead className="text-gray-700">Categoria</TableHead>
+              <TableHead className="text-right text-gray-700">Preço</TableHead>
+              <TableHead className="text-center text-gray-700">Estoque</TableHead>
+              <TableHead className="text-center text-gray-700">Status Estoque</TableHead>
+              <TableHead className="text-center text-gray-700">Validade</TableHead>
+              <TableHead className="text-center text-gray-700">Status</TableHead>
+              <TableHead className="text-center text-gray-700">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -120,38 +121,38 @@ export const ListaProdutos: React.FC = () => {
               filteredProdutos.map((produto) => (
                 <TableRow 
                   key={produto.id}
-                  className={`border-slate-700 hover:bg-slate-700/30 transition-colors ${produto.estoqueAtual <= 5 ? "bg-red-900/20" : ""}`}
+                  className={`border-gray-200 hover:bg-gray-50 transition-colors ${produto.estoqueAtual <= 5 ? "bg-red-50" : ""}`}
                 >
-                  <TableCell className="font-medium text-white">{produto.nome}</TableCell>
+                  <TableCell className="font-medium text-gray-900">{produto.nome}</TableCell>
                   <TableCell>
                     {produto.categoria ? (
                       <div className="flex items-center">
                         <span 
                           className="w-3 h-3 rounded-full mr-2" 
-                          style={{ backgroundColor: produto.categoria.cor || '#3B82F6' }}
+                          style={{ backgroundColor: produto.categoria.cor || '#6B7280' }}
                         ></span>
-                        <span className="text-slate-200">{produto.categoria.nome}</span>
+                        <span className="text-gray-700">{produto.categoria.nome}</span>
                       </div>
                     ) : (
-                      <div className="flex items-center text-red-400">
+                      <div className="flex items-center text-red-600">
                         <AlertCircle size={14} className="mr-1" />
                         <span>Sem categoria</span>
                       </div>
                     )}
                   </TableCell>
-                  <TableCell className="text-right font-mono text-white">
+                  <TableCell className="text-right font-mono text-gray-900">
                     {new Intl.NumberFormat('pt-BR', { 
                       style: 'currency', 
                       currency: 'BRL' 
                     }).format(produto.preco)}
                   </TableCell>
-                  <TableCell className="text-right font-medium text-white">
+                  <TableCell className="text-right font-medium text-gray-900">
                     {produto.estoqueAtual}
                   </TableCell>
                   <TableCell className="text-center">
                     <StockBadge quantity={produto.estoqueAtual} />
                   </TableCell>
-                  <TableCell className="text-center text-slate-200">
+                  <TableCell className="text-center text-gray-700">
                     {produto.validade ? 
                       format(new Date(produto.validade), 'dd/MM/yyyy', {locale: pt}) : 
                       "N/A"}
@@ -164,7 +165,7 @@ export const ListaProdutos: React.FC = () => {
                       variant="ghost" 
                       size="sm"
                       onClick={() => handleDelete(produto.id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-900/20"
+                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
                     >
                       <Trash2 size={16} />
                     </Button>
@@ -173,10 +174,10 @@ export const ListaProdutos: React.FC = () => {
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={8} className="text-center py-4 text-slate-400">
+                <TableCell colSpan={8} className="text-center py-4 text-gray-500">
                   {searchTerm ? (
                     <div className="flex flex-col items-center justify-center py-4">
-                      <Search size={24} className="text-slate-400 mb-2" />
+                      <Search size={24} className="text-gray-400 mb-2" />
                       <p>Nenhum produto corresponde à sua busca</p>
                     </div>
                   ) : (

@@ -1,3 +1,4 @@
+
 import React from "react";
 import Layout from "@/components/layout/Layout";
 import CardEstatistica from "@/components/dashboard/CardEstatistica";
@@ -85,7 +86,7 @@ const Dashboard: React.FC = () => {
             </p>
             <Button 
               onClick={() => refetch()}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-gray-900 hover:bg-gray-700 text-white"
             >
               <RefreshCw size={16} className="mr-2" />
               Tentar Novamente
@@ -105,28 +106,28 @@ const Dashboard: React.FC = () => {
             titulo="Total de Produtos"
             valor={isLoading ? 0 : Number(dashboardStats?.totalProdutos || 0)}
             descricao="Produtos cadastrados no sistema"
-            icone={<Package size={20} className="text-hoppe-600" />}
-            corIcone="bg-hoppe-100"
+            icone={<Package size={20} className="text-gray-600" />}
+            corIcone="bg-gray-100"
           />
           <CardEstatistica
             titulo="Produtos a Vencer"
             valor={isLoading ? 0 : Number(dashboardStats?.produtosAVencer || 0)}
             descricao="Vencem nos próximos 7 dias"
-            icone={<AlertTriangle size={20} className="text-alerta-500" />}
-            corIcone="bg-alerta-100"
+            icone={<AlertTriangle size={20} className="text-yellow-600" />}
+            corIcone="bg-yellow-100"
           />
           <CardEstatistica
             titulo="Produtos Vencidos"
             valor={isLoading ? 0 : Number(dashboardStats?.produtosVencidos || 0)}
             descricao="Necessitam descarte imediato"
-            icone={<Trash2 size={20} className="text-erro-500" />}
-            corIcone="bg-erro-100"
+            icone={<Trash2 size={20} className="text-red-600" />}
+            corIcone="bg-red-100"
           />
         </div>
 
         {/* Lista de produtos */}
         <div>
-          <h2 className="text-xl font-semibold mb-4">Produtos</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-900">Produtos</h2>
           <ListaProdutos />
         </div>
 

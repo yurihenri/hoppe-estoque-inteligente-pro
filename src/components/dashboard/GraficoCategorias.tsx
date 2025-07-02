@@ -28,7 +28,7 @@ const GraficoCategorias: React.FC = () => {
         return {
           categoria: categoria.nome,
           quantidade: count || 0,
-          cor: categoria.cor || '#3B82F6'
+          cor: categoria.cor || '#6B7280'
         };
       });
       
@@ -39,7 +39,7 @@ const GraficoCategorias: React.FC = () => {
 
   const renderPlaceholderData = () => {
     return [
-      { categoria: "Carregando...", quantidade: 1, cor: "#64748B" }
+      { categoria: "Carregando...", quantidade: 1, cor: "#9CA3AF" }
     ];
   };
 
@@ -48,9 +48,9 @@ const GraficoCategorias: React.FC = () => {
     : distribuicaoCategorias;
 
   return (
-    <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+    <Card className="bg-white border border-gray-200 shadow-sm">
       <CardHeader>
-        <CardTitle className="text-lg text-white">Distribuição por Categorias</CardTitle>
+        <CardTitle className="text-lg text-gray-900">Distribuição por Categorias</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-center pt-4">
         <div className="h-[300px] w-full">
@@ -79,14 +79,14 @@ const GraficoCategorias: React.FC = () => {
               <Tooltip 
                 formatter={(value: number, name: string) => [`${value} produtos`, name]}
                 contentStyle={{ 
-                  backgroundColor: '#1E293B', 
-                  border: '1px solid #334155', 
+                  backgroundColor: 'white', 
+                  border: '1px solid #E5E7EB', 
                   borderRadius: '0.5rem',
-                  color: '#F8FAFC'
+                  color: '#111827'
                 }}
               />
               <Legend 
-                wrapperStyle={{ color: '#F8FAFC' }}
+                wrapperStyle={{ color: '#111827' }}
               />
             </PieChart>
           </ResponsiveContainer>

@@ -53,23 +53,23 @@ const ListaAlertas: React.FC = () => {
     return (
       <div 
         key={produto.id}
-        className={`flex items-center justify-between p-3 rounded-lg mb-2 transition-all duration-200 hover:scale-105 ${
+        className={`flex items-center justify-between p-3 rounded-lg mb-2 transition-all duration-200 ${
           isVencido 
-            ? 'bg-gradient-to-r from-red-900/20 to-red-800/20 border border-red-500/30' 
-            : 'bg-gradient-to-r from-yellow-900/20 to-yellow-800/20 border border-yellow-500/30'
+            ? 'bg-red-50 border border-red-200' 
+            : 'bg-yellow-50 border border-yellow-200'
         }`}
       >
         <div className="flex items-center">
-          <div className={`p-2 rounded-lg ${isVencido ? 'bg-red-500/20' : 'bg-yellow-500/20'} mr-3`}>
+          <div className={`p-2 rounded-lg ${isVencido ? 'bg-red-100' : 'bg-yellow-100'} mr-3`}>
             {isVencido ? (
-              <AlertTriangle size={16} className="text-red-400" />
+              <AlertTriangle size={16} className="text-red-600" />
             ) : (
-              <Package size={16} className="text-yellow-400" />
+              <Package size={16} className="text-yellow-600" />
             )}
           </div>
           <div>
-            <h4 className="font-medium text-white">{produto.nome}</h4>
-            <p className="text-sm text-gray-400">
+            <h4 className="font-medium text-gray-900">{produto.nome}</h4>
+            <p className="text-sm text-gray-600">
               {isVencido ? 'Vencido em: ' : 'Vence em: '}
               {produto.validade 
                 ? format(new Date(produto.validade), 'dd/MM/yyyy', { locale: pt })
@@ -83,7 +83,7 @@ const ListaAlertas: React.FC = () => {
           <div 
             className="px-2 py-1 rounded text-xs font-medium"
             style={{
-              backgroundColor: `${produto.categoria.cor}20`, // Adiciona transparência à cor
+              backgroundColor: `${produto.categoria.cor}20`,
               color: produto.categoria.cor
             }}
           >
@@ -95,12 +95,12 @@ const ListaAlertas: React.FC = () => {
   };
 
   return (
-    <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+    <Card className="bg-white border border-gray-200 shadow-sm">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center justify-between text-white">
+        <CardTitle className="text-lg flex items-center justify-between text-gray-900">
           <span>Alertas de Validade</span>
           {!isLoading && alertas && (
-            <span className="bg-blue-500/20 text-blue-400 text-xs px-2 py-1 rounded-full border border-blue-500/30">
+            <span className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full border border-gray-200">
               {alertas.length} itens
             </span>
           )}
@@ -108,9 +108,9 @@ const ListaAlertas: React.FC = () => {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="text-center py-4 text-gray-400">Carregando alertas...</div>
+          <div className="text-center py-4 text-gray-500">Carregando alertas...</div>
         ) : !alertas || alertas.length === 0 ? (
-          <div className="text-center py-4 text-gray-400">
+          <div className="text-center py-4 text-gray-500">
             Nenhum alerta de validade no momento
           </div>
         ) : (
