@@ -23,7 +23,7 @@ export const ProductBadge: React.FC<ProductBadgeProps> = ({ validityDate }) => {
   // Produto vencido
   if (isBefore(validity, today)) {
     return (
-      <Badge className="bg-erro-100 text-erro-700 border-erro-200 hover:bg-erro-200">
+      <Badge variant="destructive">
         Vencido
       </Badge>
     );
@@ -32,7 +32,7 @@ export const ProductBadge: React.FC<ProductBadgeProps> = ({ validityDate }) => {
   // Produto a vencer em 7 dias
   if (isBefore(validity, weekLater)) {
     return (
-      <Badge className="bg-alerta-100 text-alerta-700 border-alerta-200 hover:bg-alerta-200">
+      <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">
         A vencer
       </Badge>
     );
@@ -40,7 +40,7 @@ export const ProductBadge: React.FC<ProductBadgeProps> = ({ validityDate }) => {
   
   // Produto normal
   return (
-    <Badge className="bg-sucesso-100 text-sucesso-700 border-sucesso-200 hover:bg-sucesso-200">
+    <Badge className="bg-success text-success-foreground hover:bg-success/90">
       Normal
     </Badge>
   );
@@ -60,19 +60,19 @@ export const StockBadge: React.FC<StockBadgeProps> = ({
 }) => {
   if (quantity <= lowThreshold) {
     return (
-      <Badge className="bg-erro-100 text-erro-700 border-erro-200 hover:bg-erro-200">
+      <Badge variant="destructive">
         Estoque Baixo
       </Badge>
     );
   } else if (quantity <= mediumThreshold) {
     return (
-      <Badge className="bg-alerta-100 text-alerta-700 border-alerta-200 hover:bg-alerta-200">
+      <Badge className="bg-warning text-warning-foreground hover:bg-warning/90">
         Estoque Médio
       </Badge>
     );
   } else {
     return (
-      <Badge className="bg-sucesso-100 text-sucesso-700 border-sucesso-200 hover:bg-sucesso-200">
+      <Badge className="bg-success text-success-foreground hover:bg-success/90">
         Estoque Alto
       </Badge>
     );

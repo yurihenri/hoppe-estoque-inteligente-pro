@@ -19,25 +19,25 @@ const CardEstatistica: React.FC<CardEstatisticaProps> = ({
   valor,
   descricao,
   icone,
-  corIcone = "bg-gray-100",
+  corIcone = "bg-muted",
   tendencia,
   porcentagemMudanca,
   className,
 }) => {
   return (
     <Card className={cn(
-      "bg-white border border-gray-200 shadow-sm",
+      "bg-card border shadow-sm",
       "hover:shadow-md transition-all duration-200",
       className
     )}>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium text-gray-600">{titulo}</CardTitle>
+        <CardTitle className="text-sm font-medium text-muted-foreground">{titulo}</CardTitle>
         <div className={cn("p-2 rounded-full", corIcone)}>{icone}</div>
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold text-gray-900">{valor}</div>
+        <div className="text-2xl font-bold text-card-foreground">{valor}</div>
         {descricao && (
-          <p className="text-xs text-gray-500 mt-1">{descricao}</p>
+          <p className="text-xs text-muted-foreground mt-1">{descricao}</p>
         )}
         {tendencia && porcentagemMudanca !== undefined && (
           <div className="flex items-center mt-2">
@@ -45,14 +45,14 @@ const CardEstatistica: React.FC<CardEstatisticaProps> = ({
               className={cn(
                 "text-xs font-medium",
                 tendencia === "aumento"
-                  ? "text-green-600"
-                  : "text-red-600"
+                  ? "text-success"
+                  : "text-destructive"
               )}
             >
               {tendencia === "aumento" ? "+" : "-"}
               {porcentagemMudanca}%
             </span>
-            <span className="text-xs text-gray-500 ml-1">desde o último mês</span>
+            <span className="text-xs text-muted-foreground ml-1">desde o último mês</span>
           </div>
         )}
       </CardContent>
