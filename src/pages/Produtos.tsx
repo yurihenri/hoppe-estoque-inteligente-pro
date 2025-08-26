@@ -83,11 +83,8 @@ const Produtos = () => {
     <Layout title="Produtos">
       <div className="container mx-auto py-6">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-white">Produtos</h1>
-          <Button 
-            onClick={handleOpenNewForm}
-            className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-105"
-          >
+          <h1 className="text-2xl font-bold">Produtos</h1>
+          <Button onClick={handleOpenNewForm}>
             <Plus className="mr-2 h-4 w-4" />
             Novo Produto
           </Button>
@@ -101,40 +98,37 @@ const Produtos = () => {
               placeholder="Buscar produtos..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
+              className="pl-10"
             />
           </div>
         </div>
 
-        <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-xl flex items-center gap-2 text-white">
-              <Package className="h-5 w-5 text-blue-400" />
+            <CardTitle className="text-xl flex items-center gap-2">
+              <Package className="h-5 w-5" />
               Lista de Produtos
             </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-center py-8">
-                <p className="text-gray-300">Carregando produtos...</p>
+                <p>Carregando produtos...</p>
               </div>
             ) : filteredProdutos.length === 0 ? (
               <div className="text-center py-8">
                 <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-white mb-2">
+                <h3 className="text-lg font-medium text-gray-900 mb-2">
                   {searchTerm ? "Nenhum produto encontrado" : "Nenhum produto cadastrado"}
                 </h3>
-                <p className="text-gray-400 mb-4">
+                <p className="text-gray-500 mb-4">
                   {searchTerm 
                     ? "Tente ajustar os termos da pesquisa" 
                     : "Comece cadastrando seu primeiro produto"
                   }
                 </p>
                 {!searchTerm && (
-                  <Button 
-                    onClick={handleOpenNewForm}
-                    className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-105"
-                  >
+                  <Button onClick={handleOpenNewForm}>
                     <Plus className="mr-2 h-4 w-4" />
                     Cadastrar Produto
                   </Button>
@@ -145,26 +139,23 @@ const Produtos = () => {
                 {filteredProdutos.map((produto) => (
                   <div 
                     key={produto.id} 
-                    className="p-4 border border-slate-600 rounded-lg bg-slate-800/30 hover:bg-slate-700/50 cursor-pointer transition-all duration-200 hover:scale-105"
+                    className="p-4 border rounded-lg hover:bg-gray-50 cursor-pointer"
                     onClick={() => handleOpenEditForm(produto)}
                   >
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-medium text-white">{produto.nome}</h3>
+                        <h3 className="font-medium">{produto.nome}</h3>
                         {produto.descricao && (
-                          <p className="text-sm text-gray-400 mt-1">{produto.descricao}</p>
+                          <p className="text-sm text-gray-600 mt-1">{produto.descricao}</p>
                         )}
-                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-400">
-                          <span>Estoque: <span className="text-white">{produto.estoqueAtual}</span></span>
-                          <span>Preço: <span className="text-white">R$ {produto.preco.toFixed(2)}</span></span>
+                        <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
+                          <span>Estoque: {produto.estoqueAtual}</span>
+                          <span>Preço: R$ {produto.preco.toFixed(2)}</span>
                           {produto.categoria && (
-                            <span 
-                              className="px-2 py-1 rounded text-xs font-medium"
-                              style={{
-                                backgroundColor: produto.categoria.cor + '20',
-                                color: produto.categoria.cor
-                              }}
-                            >
+                            <span className="px-2 py-1 rounded text-xs" style={{
+                              backgroundColor: produto.categoria.cor + '20',
+                              color: produto.categoria.cor
+                            }}>
                               {produto.categoria.nome}
                             </span>
                           )}

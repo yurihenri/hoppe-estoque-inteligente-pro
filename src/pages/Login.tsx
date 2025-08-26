@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
@@ -12,45 +13,39 @@ import { Credentials } from '@/types/auth';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
 import { secureStorage } from '@/utils/secureStorage';
+
 const loginSchema = z.object({
-  email: z.string().min(1, 'Email é obrigatório').email('Email inválido'),
-  password: z.string().min(1, 'Senha é obrigatória').min(6, 'Senha deve ter pelo menos 6 caracteres')
+  email: z.string()
+    .min(1, 'Email é obrigatório')
+    .email('Email inválido'),
+  password: z.string()
+    .min(1, 'Senha é obrigatória')
+    .min(6, 'Senha deve ter pelo menos 6 caracteres'),
 });
+
 const Login = () => {
-  const {
-    login,
-    isLoading,
-    error,
-    clearError,
-    user
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { login, isLoading, error, clearError, user } = useAuth();
+  const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  
   const {
     register,
     handleSubmit,
-    formState: {
-      errors,
-      isValid
-    },
-    watch
+    formState: { errors, isValid },
+    watch,
   } = useForm<Credentials>({
     resolver: zodResolver(loginSchema),
-    mode: 'onChange'
+    mode: 'onChange',
   });
 
   // Redireciona se já logado
   useEffect(() => {
     if (user && !isLoading) {
       const from = location.state?.from?.pathname || '/dashboard';
-      navigate(from, {
-        replace: true
-      });
+      navigate(from, { replace: true });
     }
   }, [user, isLoading, navigate, location]);
 
@@ -71,25 +66,30 @@ const Login = () => {
       setRememberMe(true);
     }
   }, []);
+
   const watchedValues = watch();
   const canSubmit = isValid && watchedValues.email && watchedValues.password && !isLoading;
+
   const onSubmit = async (data: Credentials) => {
     try {
       // Sanitizar email antes de enviar
       const sanitizedEmail = data.email.toLowerCase().trim();
       console.log('Tentando fazer login com email sanitizado:', sanitizedEmail);
+      
       await login(sanitizedEmail, data.password);
-
+      
       // Salva preferência no secure storage
       if (rememberMe) {
         secureStorage.setUserPreference('remember_me', true);
       } else {
         secureStorage.setUserPreference('remember_me', false);
       }
+      
       toast({
         title: "Login realizado!",
-        description: "Bem-vindo ao Hoppe."
+        description: "Bem-vindo ao Hoppe.",
       });
+      
     } catch (error: any) {
       // Error is already handled in AuthContext
     }
@@ -97,18 +97,22 @@ const Login = () => {
 
   // Se já logado, mostra carregamento
   if (user) {
-    return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800">
         <div className="text-center">
           <div className="h-12 w-12 animate-spin rounded-full border-4 border-t-blue-400 border-blue-200/30 mx-auto mb-4"></div>
           <p className="text-white">Redirecionando...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
-  return <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-4">
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-4">
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">HOPPE</h1>
+          <h1 className="text-4xl font-bold text-white mb-2">Hoppe</h1>
           <p className="text-blue-200">Sistema de Gerenciamento de Estoque</p>
         </div>
         
@@ -120,19 +124,31 @@ const Login = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4">
               {/* Erro de autenticação */}
-              {error && <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3 flex items-center space-x-2">
+              {error && (
+                <div className="bg-red-500/10 border border-red-500/20 rounded-md p-3 flex items-center space-x-2">
                   <AlertCircle className="h-5 w-5 text-red-400 flex-shrink-0" />
                   <p className="text-red-200 text-sm">{error}</p>
-                </div>}
+                </div>
+              )}
 
               {/* Email */}
               <div className="space-y-2">
                 <Label htmlFor="email" className="text-white">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300 h-5 w-5" />
-                  <Input id="email" type="email" placeholder="seu@email.com" className="pl-10 bg-white/10 border-white/30 text-white placeholder-blue-200" {...register('email')} disabled={isLoading} autoComplete="email" />
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="seu@email.com"
+                    className="pl-10 bg-white/10 border-white/30 text-white placeholder-blue-200"
+                    {...register('email')}
+                    disabled={isLoading}
+                    autoComplete="email"
+                  />
                 </div>
-                {errors.email && <p className="text-red-300 text-sm">{errors.email.message}</p>}
+                {errors.email && (
+                  <p className="text-red-300 text-sm">{errors.email.message}</p>
+                )}
               </div>
               
               {/* Senha */}
@@ -140,17 +156,41 @@ const Login = () => {
                 <Label htmlFor="password" className="text-white">Senha</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-300 h-5 w-5" />
-                  <Input id="password" type={showPassword ? 'text' : 'password'} placeholder="••••••••" className="pl-10 pr-10 bg-white/10 border-white/30 text-white placeholder-blue-200" {...register('password')} disabled={isLoading} autoComplete="current-password" />
-                  <Button type="button" variant="ghost" size="sm" className="absolute right-0 top-0 h-full px-3 text-blue-300 hover:text-white" onClick={() => setShowPassword(!showPassword)} disabled={isLoading}>
+                  <Input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="••••••••"
+                    className="pl-10 pr-10 bg-white/10 border-white/30 text-white placeholder-blue-200"
+                    {...register('password')}
+                    disabled={isLoading}
+                    autoComplete="current-password"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="absolute right-0 top-0 h-full px-3 text-blue-300 hover:text-white"
+                    onClick={() => setShowPassword(!showPassword)}
+                    disabled={isLoading}
+                  >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </Button>
                 </div>
-                {errors.password && <p className="text-red-300 text-sm">{errors.password.message}</p>}
+                {errors.password && (
+                  <p className="text-red-300 text-sm">{errors.password.message}</p>
+                )}
               </div>
 
               {/* Lembrar de mim */}
               <div className="flex items-center space-x-2">
-                <input id="remember" type="checkbox" checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} className="w-4 h-4 text-blue-600 bg-transparent border-white/30 rounded" disabled={isLoading} />
+                <input
+                  id="remember"
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 bg-transparent border-white/30 rounded"
+                  disabled={isLoading}
+                />
                 <Label htmlFor="remember" className="text-blue-200 text-sm">
                   Lembrar de mim
                 </Label>
@@ -158,11 +198,19 @@ const Login = () => {
             </CardContent>
             
             <CardFooter className="flex flex-col space-y-4">
-              <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700" disabled={!canSubmit}>
-                {isLoading ? <>
+              <Button
+                type="submit"
+                className="w-full bg-blue-600 hover:bg-blue-700"
+                disabled={!canSubmit}
+              >
+                {isLoading ? (
+                  <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Entrando...
-                  </> : 'Entrar'}
+                  </>
+                ) : (
+                  'Entrar'
+                )}
               </Button>
               
               <p className="text-blue-200 text-sm text-center">
@@ -175,6 +223,8 @@ const Login = () => {
           </form>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 };
+
 export default Login;

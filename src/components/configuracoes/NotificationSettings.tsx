@@ -52,15 +52,15 @@ const NotificationSettings = () => {
 
   return (
     <div className="space-y-6">
-      <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+      <Card>
         <CardContent className="pt-6">
-          <h3 className="text-lg font-medium mb-4 text-white">Alertas de Estoque</h3>
+          <h3 className="text-lg font-medium mb-4">Alertas de Estoque</h3>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="estoque-alerts" className="text-white">Alertas de estoque baixo</Label>
-                <p className="text-sm text-gray-300">
+                <Label htmlFor="estoque-alerts">Alertas de estoque baixo</Label>
+                <p className="text-sm text-muted-foreground">
                   Receber notificações quando produtos atingirem o estoque mínimo
                 </p>
               </div>
@@ -73,8 +73,8 @@ const NotificationSettings = () => {
             
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="validade-alerts" className="text-white">Alertas de validade próxima</Label>
-                <p className="text-sm text-gray-300">
+                <Label htmlFor="validade-alerts">Alertas de validade próxima</Label>
+                <p className="text-sm text-muted-foreground">
                   Receber notificações sobre produtos com data de validade próxima
                 </p>
               </div>
@@ -88,15 +88,15 @@ const NotificationSettings = () => {
         </CardContent>
       </Card>
       
-      <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+      <Card>
         <CardContent className="pt-6">
-          <h3 className="text-lg font-medium mb-4 text-white">Canais de Notificação</h3>
+          <h3 className="text-lg font-medium mb-4">Canais de Notificação</h3>
           
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="email-notifications" className="text-white">Notificações por e-mail</Label>
-                <p className="text-sm text-gray-300">
+                <Label htmlFor="email-notifications">Notificações por e-mail</Label>
+                <p className="text-sm text-muted-foreground">
                   Receber alertas por e-mail
                 </p>
               </div>
@@ -109,8 +109,8 @@ const NotificationSettings = () => {
             
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="push-notifications" className="text-white">Notificações push</Label>
-                <p className="text-sm text-gray-300">
+                <Label htmlFor="push-notifications">Notificações push</Label>
+                <p className="text-sm text-muted-foreground">
                   Receber notificações push no navegador
                 </p>
               </div>
@@ -123,8 +123,8 @@ const NotificationSettings = () => {
             
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label htmlFor="in-app-notifications" className="text-white">Notificações no aplicativo</Label>
-                <p className="text-sm text-gray-300">
+                <Label htmlFor="in-app-notifications">Notificações no aplicativo</Label>
+                <p className="text-sm text-muted-foreground">
                   Receber alertas dentro do aplicativo
                 </p>
               </div>
@@ -138,38 +138,37 @@ const NotificationSettings = () => {
         </CardContent>
       </Card>
       
-      <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+      <Card>
         <CardContent className="pt-6">
-          <h3 className="text-lg font-medium mb-4 text-white">Configurações de Relatórios</h3>
+          <h3 className="text-lg font-medium mb-4">Configurações de Relatórios</h3>
           
           <div className="space-y-4">
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="report-frequency" className="text-white">Frequência de relatórios automáticos</Label>
+                <Label htmlFor="report-frequency">Frequência de relatórios automáticos</Label>
                 <Select 
                   value={settings.reportFrequency}
                   onValueChange={(value) => handleChange("reportFrequency", value)}
                 >
-                  <SelectTrigger id="report-frequency" className="bg-slate-800/50 border-slate-600 text-white">
+                  <SelectTrigger id="report-frequency">
                     <SelectValue placeholder="Selecione a frequência" />
                   </SelectTrigger>
-                  <SelectContent className="bg-slate-800 border-slate-600">
-                    <SelectItem value="desativado" className="text-white hover:bg-slate-700">Desativado</SelectItem>
-                    <SelectItem value="diario" className="text-white hover:bg-slate-700">Diário</SelectItem>
-                    <SelectItem value="semanal" className="text-white hover:bg-slate-700">Semanal</SelectItem>
-                    <SelectItem value="mensal" className="text-white hover:bg-slate-700">Mensal</SelectItem>
+                  <SelectContent>
+                    <SelectItem value="desativado">Desativado</SelectItem>
+                    <SelectItem value="diario">Diário</SelectItem>
+                    <SelectItem value="semanal">Semanal</SelectItem>
+                    <SelectItem value="mensal">Mensal</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="alert-time" className="text-white">Horário preferido para alertas</Label>
+                <Label htmlFor="alert-time">Horário preferido para alertas</Label>
                 <Input 
                   id="alert-time"
                   type="time"
                   value={settings.alertTime}
                   onChange={(e) => handleChange("alertTime", e.target.value)}
-                  className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
                 />
               </div>
             </div>
@@ -177,7 +176,7 @@ const NotificationSettings = () => {
           
           <Button 
             onClick={saveSettings} 
-            className="mt-6 bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-105" 
+            className="mt-6" 
             disabled={isUpdating}
           >
             {isUpdating ? "Salvando..." : "Salvar configurações"}

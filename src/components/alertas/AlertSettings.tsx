@@ -86,16 +86,16 @@ const AlertSettings: React.FC = () => {
 
   return (
     <div className="space-y-8">
-      <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Verificação de Alertas</CardTitle>
-          <CardDescription className="text-gray-300">Configure como e quando o sistema deve verificar por novos alertas</CardDescription>
+          <CardTitle>Verificação de Alertas</CardTitle>
+          <CardDescription>Configure como e quando o sistema deve verificar por novos alertas</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-row items-center justify-between space-x-2">
-            <Label htmlFor="auto-check" className="flex flex-col space-y-1 text-white">
+            <Label htmlFor="auto-check" className="flex flex-col space-y-1">
               <span>Verificação automática</span>
-              <span className="font-normal text-sm text-gray-300">
+              <span className="font-normal text-sm text-muted-foreground">
                 Ativar verificação automática de alertas
               </span>
             </Label>
@@ -108,7 +108,7 @@ const AlertSettings: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="check-interval" className="text-white">Intervalo de verificação (horas)</Label>
+              <Label htmlFor="check-interval">Intervalo de verificação (horas)</Label>
               <Input
                 id="check-interval"
                 type="number"
@@ -117,9 +117,8 @@ const AlertSettings: React.FC = () => {
                 value={settings.checkInterval}
                 onChange={(e) => handleChangeSetting('checkInterval', Number(e.target.value))}
                 disabled={!settings.autoCheckEnabled}
-                className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
               />
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-muted-foreground">
                 A cada quantas horas o sistema deve verificar por novos alertas
               </p>
             </div>
@@ -127,39 +126,37 @@ const AlertSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Critérios de Alerta</CardTitle>
-          <CardDescription className="text-gray-300">Defina quando alertas devem ser gerados</CardDescription>
+          <CardTitle>Critérios de Alerta</CardTitle>
+          <CardDescription>Defina quando alertas devem ser gerados</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="low-stock" className="text-white">Estoque baixo (unidades)</Label>
+              <Label htmlFor="low-stock">Estoque baixo (unidades)</Label>
               <Input
                 id="low-stock"
                 type="number"
                 min={1}
                 value={settings.lowStockThreshold}
                 onChange={(e) => handleChangeSetting('lowStockThreshold', Number(e.target.value))}
-                className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
               />
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-muted-foreground">
                 Quantidade mínima para gerar alerta de estoque baixo
               </p>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="expiration-days" className="text-white">Dias para vencimento</Label>
+              <Label htmlFor="expiration-days">Dias para vencimento</Label>
               <Input
                 id="expiration-days"
                 type="number"
                 min={1}
                 value={settings.expirationWarningDays}
                 onChange={(e) => handleChangeSetting('expirationWarningDays', Number(e.target.value))}
-                className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
               />
-              <p className="text-sm text-gray-300">
+              <p className="text-sm text-muted-foreground">
                 Avisar quando faltar esta quantidade de dias para o produto vencer
               </p>
             </div>
@@ -167,17 +164,17 @@ const AlertSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Canais de Notificação</CardTitle>
-          <CardDescription className="text-gray-300">Configure onde e como as notificações serão enviadas</CardDescription>
+          <CardTitle>Canais de Notificação</CardTitle>
+          <CardDescription>Configure onde e como as notificações serão enviadas</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-col space-y-4">
             <div className="flex flex-row items-center justify-between space-x-2">
-              <Label htmlFor="email-notifications" className="flex flex-col space-y-1 text-white">
+              <Label htmlFor="email-notifications" className="flex flex-col space-y-1">
                 <span>Notificações por e-mail</span>
-                <span className="font-normal text-sm text-gray-300">
+                <span className="font-normal text-sm text-muted-foreground">
                   Enviar alertas por e-mail
                 </span>
               </Label>
@@ -189,9 +186,9 @@ const AlertSettings: React.FC = () => {
             </div>
 
             <div className="flex flex-row items-center justify-between space-x-2">
-              <Label htmlFor="push-notifications" className="flex flex-col space-y-1 text-white">
+              <Label htmlFor="push-notifications" className="flex flex-col space-y-1">
                 <span>Notificações push</span>
-                <span className="font-normal text-sm text-gray-300">
+                <span className="font-normal text-sm text-muted-foreground">
                   Enviar alertas como notificações push no navegador
                 </span>
               </Label>
@@ -203,9 +200,9 @@ const AlertSettings: React.FC = () => {
             </div>
 
             <div className="flex flex-row items-center justify-between space-x-2">
-              <Label htmlFor="in-app-notifications" className="flex flex-col space-y-1 text-white">
+              <Label htmlFor="in-app-notifications" className="flex flex-col space-y-1">
                 <span>Notificações no aplicativo</span>
-                <span className="font-normal text-sm text-gray-300">
+                <span className="font-normal text-sm text-muted-foreground">
                   Mostrar alertas dentro do aplicativo
                 </span>
               </Label>
@@ -219,16 +216,16 @@ const AlertSettings: React.FC = () => {
         </CardContent>
       </Card>
 
-      <Card className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] border-[#334155] backdrop-blur-sm hover:from-[#334155] hover:to-[#1E293B] transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl hover:shadow-blue-500/20">
+      <Card>
         <CardHeader>
-          <CardTitle className="text-white">Horário de Silêncio</CardTitle>
-          <CardDescription className="text-gray-300">Defina um período para não receber notificações</CardDescription>
+          <CardTitle>Horário de Silêncio</CardTitle>
+          <CardDescription>Defina um período para não receber notificações</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-row items-center justify-between space-x-2">
-            <Label htmlFor="quiet-hours" className="flex flex-col space-y-1 text-white">
+            <Label htmlFor="quiet-hours" className="flex flex-col space-y-1">
               <span>Ativar horário de silêncio</span>
-              <span className="font-normal text-sm text-gray-300">
+              <span className="font-normal text-sm text-muted-foreground">
                 Suspende notificações durante o período definido
               </span>
             </Label>
@@ -241,26 +238,24 @@ const AlertSettings: React.FC = () => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="quiet-start" className="text-white">Início</Label>
+              <Label htmlFor="quiet-start">Início</Label>
               <Input
                 id="quiet-start"
                 type="time"
                 value={settings.quietHoursStart}
                 onChange={(e) => handleChangeSetting('quietHoursStart', e.target.value)}
                 disabled={!settings.quietHoursEnabled}
-                className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="quiet-end" className="text-white">Fim</Label>
+              <Label htmlFor="quiet-end">Fim</Label>
               <Input
                 id="quiet-end"
                 type="time"
                 value={settings.quietHoursEnd}
                 onChange={(e) => handleChangeSetting('quietHoursEnd', e.target.value)}
                 disabled={!settings.quietHoursEnabled}
-                className="bg-slate-800/50 border-slate-600 text-white placeholder-slate-400 focus:border-blue-500 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -268,17 +263,12 @@ const AlertSettings: React.FC = () => {
       </Card>
 
       <div className="flex justify-between mt-6">
-        <Button 
-          variant="outline" 
-          onClick={resetSettings}
-          className="border-slate-600 text-white hover:bg-slate-700"
-        >
+        <Button variant="outline" onClick={resetSettings}>
           Restaurar Padrão
         </Button>
         <Button 
           onClick={saveSettings}
           disabled={!isModified}
-          className="bg-blue-600 hover:bg-blue-700 text-white transition-all duration-200 hover:scale-105"
         >
           Salvar Alterações
         </Button>

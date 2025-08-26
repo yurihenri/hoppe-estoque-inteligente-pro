@@ -52,7 +52,7 @@ const Sidebar = () => {
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!isCollapsed && (
           <div>
-            <h1 className="text-xl font-bold text-gray-900">Hoppe</h1>
+            <h1 className="text-xl font-bold text-hoppe-600">Hoppe</h1>
             {currentPlan && (
               <PlanBadge plan={currentPlan} className="mt-1" />
             )}
@@ -62,7 +62,6 @@ const Sidebar = () => {
           variant="ghost"
           size="sm"
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="text-gray-600 hover:bg-gray-100"
         >
           {isCollapsed ? <ChevronRight size={16} /> : <ChevronLeft size={16} />}
         </Button>
@@ -78,10 +77,10 @@ const Sidebar = () => {
               <li key={item.path}>
                 <NavLink
                   to={item.path}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                      ? 'bg-hoppe-100 text-hoppe-700'
+                      : 'text-gray-700 hover:bg-gray-100'
                   }`}
                 >
                   <item.icon size={20} />
@@ -105,7 +104,7 @@ const Sidebar = () => {
           variant="ghost"
           size="sm"
           onClick={handleLogout}
-          className={`w-full text-gray-600 hover:bg-gray-100 hover:text-gray-900 ${isCollapsed ? 'justify-center' : 'justify-start'}`}
+          className={`w-full ${isCollapsed ? 'justify-center' : 'justify-start'}`}
         >
           <LogOut size={16} />
           {!isCollapsed && <span className="ml-2">Sair</span>}

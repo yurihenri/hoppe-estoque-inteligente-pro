@@ -40,14 +40,14 @@ const GraficoValidade: React.FC = () => {
         { status: "Normal", quantidade: normais, cor: "#10B981" },
         { status: "Próximo ao Vencimento", quantidade: proximosAoVencimento, cor: "#F59E0B" },
         { status: "Vencido", quantidade: vencidos, cor: "#EF4444" },
-        { status: "Sem Data", quantidade: semData, cor: "#6B7280" }
+        { status: "Sem Data", quantidade: semData, cor: "#9CA3AF" }
       ].filter(item => item.quantidade > 0);
     }
   });
 
   const renderPlaceholderData = () => {
     return [
-      { status: "Carregando...", quantidade: 1, cor: "#9CA3AF" }
+      { status: "Carregando...", quantidade: 1, cor: "#CBD5E1" }
     ];
   };
 
@@ -56,9 +56,9 @@ const GraficoValidade: React.FC = () => {
     : distribuicaoValidade;
 
   return (
-    <Card className="bg-white border border-gray-200 shadow-sm">
+    <Card className="col-span-1 card-stats">
       <CardHeader>
-        <CardTitle className="text-lg text-gray-900">Status de Validade</CardTitle>
+        <CardTitle className="text-lg">Status de Validade</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-center pt-4">
         <div className="h-[300px] w-full">
@@ -86,16 +86,9 @@ const GraficoValidade: React.FC = () => {
               </Pie>
               <Tooltip 
                 formatter={(value: number, name: string) => [`${value} itens`, name]}
-                contentStyle={{ 
-                  backgroundColor: 'white', 
-                  border: '1px solid #E5E7EB', 
-                  borderRadius: '0.5rem',
-                  color: '#111827'
-                }}
+                contentStyle={{ borderRadius: '0.375rem', border: '1px solid #e2e8f0' }}
               />
-              <Legend 
-                wrapperStyle={{ color: '#111827' }}
-              />
+              <Legend />
             </PieChart>
           </ResponsiveContainer>
         </div>
