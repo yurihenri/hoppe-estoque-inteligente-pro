@@ -48,9 +48,9 @@ const GraficoCategorias: React.FC = () => {
     : distribuicaoCategorias;
 
   return (
-    <Card className="col-span-1 card-stats">
+    <Card className="transition-all duration-200 hover:shadow-lg">
       <CardHeader>
-        <CardTitle className="text-lg">Distribuição por Categorias</CardTitle>
+        <CardTitle className="text-lg text-foreground">Distribuição por Categorias</CardTitle>
       </CardHeader>
       <CardContent className="flex justify-center pt-4">
         <div className="h-[300px] w-full">

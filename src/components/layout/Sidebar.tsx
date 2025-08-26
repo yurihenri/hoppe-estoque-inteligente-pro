@@ -45,14 +45,14 @@ const Sidebar = () => {
   };
 
   return (
-    <div className={`bg-white border-r border-gray-200 transition-all duration-300 ${
+    <div className={`bg-card border-r border-border transition-all duration-300 ${
       isCollapsed ? 'w-16' : 'w-64'
     } flex flex-col h-full`}>
       {/* Header */}
-      <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+      <div className="p-4 border-b border-border flex items-center justify-between">
         {!isCollapsed && (
           <div>
-            <h1 className="text-xl font-bold text-hoppe-600">Hoppe</h1>
+            <h1 className="text-xl font-bold text-primary">Hoppe</h1>
             {currentPlan && (
               <PlanBadge plan={currentPlan} className="mt-1" />
             )}
@@ -79,8 +79,8 @@ const Sidebar = () => {
                   to={item.path}
                   className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-hoppe-100 text-hoppe-700'
-                      : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-primary/10 text-primary'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
                   <item.icon size={20} />
@@ -93,11 +93,11 @@ const Sidebar = () => {
       </nav>
 
       {/* User info and logout */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-border">
         {!isCollapsed && user && (
           <div className="mb-3">
-            <p className="text-sm font-medium text-gray-900">{user.nome}</p>
-            <p className="text-xs text-gray-500">{user.email}</p>
+            <p className="text-sm font-medium text-foreground">{user.nome}</p>
+            <p className="text-xs text-muted-foreground">{user.email}</p>
           </div>
         )}
         <Button
@@ -113,8 +113,8 @@ const Sidebar = () => {
 
       {/* Powered by Hoppe */}
       {!currentPlan?.features.remove_branding && !isCollapsed && (
-        <div className="p-4 border-t border-gray-200">
-          <p className="text-xs text-gray-400 text-center">Powered by Hoppe</p>
+        <div className="p-4 border-t border-border">
+          <p className="text-xs text-muted-foreground text-center">Powered by Hoppe</p>
         </div>
       )}
     </div>

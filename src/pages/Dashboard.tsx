@@ -73,15 +73,15 @@ const Dashboard: React.FC = () => {
       <Layout title="Dashboard">
         <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
           <div className="text-center">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               Erro ao Carregar Dashboard
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-muted-foreground mb-4">
               Não foi possível carregar os dados do painel. Verifique sua conexão e tente novamente.
             </p>
             <Button 
               onClick={() => refetch()}
-              className="bg-blue-600 hover:bg-blue-700"
+              variant="default"
             >
               <RefreshCw size={16} className="mr-2" />
               Tentar Novamente
@@ -101,22 +101,22 @@ const Dashboard: React.FC = () => {
             titulo="Total de Produtos"
             valor={isLoading ? 0 : Number(dashboardStats?.totalProdutos || 0)}
             descricao="Produtos cadastrados no sistema"
-            icone={<Package size={20} className="text-hoppe-600" />}
-            corIcone="bg-hoppe-100"
+            icone={<Package size={20} className="text-primary" />}
+            corIcone="bg-primary/10"
           />
           <CardEstatistica
             titulo="Produtos a Vencer"
             valor={isLoading ? 0 : Number(dashboardStats?.produtosAVencer || 0)}
             descricao="Vencem nos próximos 7 dias"
-            icone={<AlertTriangle size={20} className="text-alerta-500" />}
-            corIcone="bg-alerta-100"
+            icone={<AlertTriangle size={20} className="text-warning" />}
+            corIcone="bg-warning/10"
           />
           <CardEstatistica
             titulo="Produtos Vencidos"
             valor={isLoading ? 0 : Number(dashboardStats?.produtosVencidos || 0)}
             descricao="Necessitam descarte imediato"
-            icone={<Trash2 size={20} className="text-erro-500" />}
-            corIcone="bg-erro-100"
+            icone={<Trash2 size={20} className="text-destructive" />}
+            corIcone="bg-destructive/10"
           />
         </div>
 
