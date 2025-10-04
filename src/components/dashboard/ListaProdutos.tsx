@@ -12,10 +12,12 @@ import { pt } from "date-fns/locale";
 import { toast } from "sonner";
 import { normalizeProduto } from "@/utils/normalizeData";
 import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/useDebounce";
 
 export const ListaProdutos: React.FC = () => {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Fetch produtos
   const { data: produtos, isLoading, error } = useQuery({
@@ -76,13 +78,13 @@ export const ListaProdutos: React.FC = () => {
     }
   };
 
-  // Filtrar produtos com base no termo de busca
+  // Filtrar produtos com base no termo de busca (usando debounce)
   const filteredProdutos = produtos?.filter(produto => 
-    produto.nome.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    produto.descricao?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    produto.categoria?.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    produto.codigoRastreio?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (produto.validade && format(new Date(produto.validade), 'dd/MM/yyyy').includes(searchTerm))
+    produto.nome.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) || 
+    produto.descricao?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    produto.categoria?.nome.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    produto.codigoRastreio?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
+    (produto.validade && format(new Date(produto.validade), 'dd/MM/yyyy').includes(debouncedSearchTerm))
   ) || [];
 
   if (isLoading) return <div className="p-4">Carregando produtos...</div>;

@@ -2,10 +2,34 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { normalizeProduto } from "@/utils/normalizeData";
 
 const Index = () => {
   const { user, isLoading } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    // Prefetch dashboard data when user is authenticated
+    if (user && !isLoading) {
+      queryClient.prefetchQuery({
+        queryKey: ['dashboardData'],
+        queryFn: async () => {
+          const { data: produtos } = await supabase
+            .from('produtos')
+            .select(`
+              *,
+              categoria:categorias(id, nome, cor)
+            `);
+          
+          return produtos?.map(normalizeProduto) || [];
+        },
+        staleTime: 1000 * 60 * 5,
+      });
+    }
+  }, [user, isLoading, queryClient]);
 
   useEffect(() => {
     if (!isLoading) {

@@ -9,32 +9,30 @@ const GraficoCategorias: React.FC = () => {
   const { data: distribuicaoCategorias, isLoading } = useQuery({
     queryKey: ['distribuicaoCategorias'],
     queryFn: async () => {
-      // Fetch categorias count
-      const { data: categoriasData, error } = await supabase
+      // Optimized query with aggregation
+      const { data: categoriasData, error: catError } = await supabase
         .from('categorias')
-        .select('id, nome, cor');
+        .select(`
+          id,
+          nome,
+          cor,
+          produtos:produtos(count)
+        `);
       
-      if (error) throw error;
-
-      // Get count of produtos per categoria
-      const produtosPromises = categoriasData.map(async (categoria) => {
-        const { count, error: countError } = await supabase
-          .from('produtos')
-          .select('id', { count: 'exact', head: true })
-          .eq('categoria_id', categoria.id);
-          
-        if (countError) throw countError;
-        
-        return {
-          categoria: categoria.nome,
-          quantidade: count || 0,
-          cor: categoria.cor || '#3B82F6'
-        };
-      });
+      if (catError) throw catError;
       
-      const results = await Promise.all(produtosPromises);
-      return results.filter(item => item.quantidade > 0);
-    }
+      const results = categoriasData
+        ?.map(cat => ({
+          categoria: cat.nome,
+          quantidade: (cat.produtos as any)?.[0]?.count || 0,
+          cor: cat.cor || '#3B82F6'
+        }))
+        .filter(item => item.quantidade > 0) || [];
+      
+      return results;
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 
   const renderPlaceholderData = () => {

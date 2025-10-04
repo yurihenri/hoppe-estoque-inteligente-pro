@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { Suspense } from "react";
 import Layout from "@/components/layout/Layout";
 import CardEstatistica from "@/components/dashboard/CardEstatistica";
 import GraficoCategorias from "@/components/dashboard/GraficoCategorias";
@@ -7,65 +7,12 @@ import GraficoValidade from "@/components/dashboard/GraficoValidade";
 import ListaAlertas from "@/components/dashboard/ListaAlertas";
 import { ListaProdutos } from "@/components/dashboard/ListaProdutos";
 import { Package, AlertTriangle, Trash2, RefreshCw } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { addDays, isBefore, isAfter } from "date-fns";
 import { Button } from "@/components/ui/button";
+import { useDashboardData } from "@/hooks/useDashboardData";
+import { DashboardSkeleton } from "@/components/ui/skeleton-dashboard";
 
 const Dashboard: React.FC = () => {
-  // Fetch dashboard statistics with better error handling
-  const { data: dashboardStats, isLoading, error, refetch } = useQuery({
-    queryKey: ['dashboardStats'],
-    queryFn: async () => {
-      // Fetch all products
-      const { data: produtos, error } = await supabase
-        .from('produtos')
-        .select('*');
-      
-      if (error) {
-        throw error;
-      }
-      
-      const today = new Date();
-      const nextWeek = addDays(today, 7);
-      
-      // Calculate statistics
-      const totalProdutos = produtos?.length || 0;
-      
-      const produtosVencidos = produtos?.filter(produto => 
-        produto.validade && isBefore(new Date(produto.validade), today)
-      ).length || 0;
-      
-      const produtosAVencer = produtos?.filter(produto => 
-        produto.validade && 
-        isAfter(new Date(produto.validade), today) && 
-        isBefore(new Date(produto.validade), nextWeek)
-      ).length || 0;
-      
-      // Calcular produtos com estoque baixo (menos de 5 unidades)
-      const produtosEstoqueBaixo = produtos?.filter(produto => 
-        produto.quantidade <= 5
-      ).length || 0;
-      
-      // Calcular produtos sem categoria
-      const produtosSemCategoria = produtos?.filter(produto => 
-        !produto.categoria_id
-      ).length || 0;
-      
-      const stats = {
-        totalProdutos,
-        produtosVencidos,
-        produtosAVencer,
-        produtosEstoqueBaixo,
-        produtosSemCategoria
-      };
-      
-      return stats;
-    },
-    refetchOnWindowFocus: false,
-    retry: 3,
-    retryDelay: 1000,
-  });
+  const { data: dashboardData, isLoading, error, refetch } = useDashboardData();
 
   // Se há erro no carregamento dos dados
   if (error && !isLoading) {
@@ -92,6 +39,14 @@ const Dashboard: React.FC = () => {
     );
   }
 
+  if (isLoading) {
+    return (
+      <Layout title="Dashboard">
+        <DashboardSkeleton />
+      </Layout>
+    );
+  }
+
   return (
     <Layout title="Dashboard">
       <div className="space-y-6">
@@ -99,21 +54,21 @@ const Dashboard: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <CardEstatistica
             titulo="Total de Produtos"
-            valor={isLoading ? 0 : Number(dashboardStats?.totalProdutos || 0)}
+            valor={dashboardData?.stats.totalProdutos || 0}
             descricao="Produtos cadastrados no sistema"
             icone={<Package size={20} className="text-primary" />}
             corIcone="bg-primary/10"
           />
           <CardEstatistica
             titulo="Produtos a Vencer"
-            valor={isLoading ? 0 : Number(dashboardStats?.produtosAVencer || 0)}
+            valor={dashboardData?.stats.produtosAVencer || 0}
             descricao="Vencem nos próximos 7 dias"
             icone={<AlertTriangle size={20} className="text-warning" />}
             corIcone="bg-warning/10"
           />
           <CardEstatistica
             titulo="Produtos Vencidos"
-            valor={isLoading ? 0 : Number(dashboardStats?.produtosVencidos || 0)}
+            valor={dashboardData?.stats.produtosVencidos || 0}
             descricao="Necessitam descarte imediato"
             icone={<Trash2 size={20} className="text-destructive" />}
             corIcone="bg-destructive/10"
@@ -123,17 +78,23 @@ const Dashboard: React.FC = () => {
         {/* Lista de produtos */}
         <div>
           <h2 className="text-xl font-semibold mb-4">Produtos</h2>
-          <ListaProdutos />
+          <Suspense fallback={<DashboardSkeleton />}>
+            <ListaProdutos />
+          </Suspense>
         </div>
 
         {/* Seção de gráficos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <GraficoCategorias />
-          <GraficoValidade />
+          <Suspense fallback={<DashboardSkeleton />}>
+            <GraficoCategorias />
+            <GraficoValidade />
+          </Suspense>
         </div>
 
         {/* Lista de alertas */}
-        <ListaAlertas />
+        <Suspense fallback={<DashboardSkeleton />}>
+          <ListaAlertas />
+        </Suspense>
       </div>
     </Layout>
   );
