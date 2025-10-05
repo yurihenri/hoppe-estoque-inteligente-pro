@@ -96,10 +96,19 @@ export const usePlans = () => {
           setCurrentSubscription(normalizedSubscription);
           setCurrentPlan(normalizedSubscription.plan);
         } else {
-          // Se não há assinatura ativa, buscar plano gratuito
-          const freePlan = plans.find(p => p.type === 'free');
-          if (freePlan) {
-            setCurrentPlan(freePlan);
+          // Se não há assinatura ativa, buscar o plano atual da empresa
+          const { data: empresaData, error: empresaError } = await supabase
+            .from('empresas')
+            .select('current_plan_id, plans(*)')
+            .eq('id', user.empresaId)
+            .single();
+
+          if (!empresaError && empresaData?.plans) {
+            const plan = {
+              ...empresaData.plans,
+              features: convertJsonToFeatures(empresaData.plans.features)
+            };
+            setCurrentPlan(plan);
           }
         }
       } catch (error) {

@@ -23,10 +23,23 @@ const Planos = () => {
 
     setLoading(true);
     try {
+      // Buscar o ID do plano gratuito
+      const { data: freePlan, error: planError } = await supabase
+        .from('plans')
+        .select('id')
+        .eq('type', 'free')
+        .single();
+
+      if (planError) throw planError;
+      if (!freePlan) {
+        toast.error('Plano gratuito não encontrado');
+        return;
+      }
+
       // Update user's company plan to free
       const { error } = await supabase
         .from('empresas')
-        .update({ current_plan_id: null }) // Free plan has no plan_id
+        .update({ current_plan_id: freePlan.id })
         .eq('id', user.empresaId);
 
       if (error) throw error;
