@@ -29,124 +29,149 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const clearError = () => setError(null);
 
+  // Função separada para buscar dados do perfil/empresa
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      console.log('Buscando perfil para usuário:', userId);
+      
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error('Erro ao buscar perfil:', profileError);
+        setError('Erro ao carregar perfil do usuário.');
+        return;
+      }
+
+      if (!profile) {
+        console.error('Perfil não encontrado, criando novo perfil...');
+        
+        const { data: session } = await supabase.auth.getSession();
+        const userEmail = session?.session?.user?.email;
+        const userName = session?.session?.user?.user_metadata?.nome;
+        
+        const { data: newProfile, error: createError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: userEmail,
+            nome: userName || userEmail?.split('@')[0] || 'Usuário'
+          })
+          .select()
+          .single();
+
+        if (createError) {
+          console.error('Erro ao criar perfil:', createError);
+          setError('Erro ao criar perfil de usuário.');
+          return;
+        }
+
+        const userData: Usuario = {
+          id: newProfile.id,
+          nome: newProfile.nome,
+          email: newProfile.email,
+          empresaId: newProfile.empresa_id,
+          avatarUrl: newProfile.avatar_url,
+          cargo: newProfile.cargo,
+          createdAt: newProfile.created_at
+        };
+
+        setUser(userData);
+        return;
+      }
+
+      // Se tem empresa_id, buscar dados da empresa
+      if (profile.empresa_id) {
+        const { data: empresa, error: empresaError } = await supabase
+          .from('empresas')
+          .select(`
+            *,
+            current_plan:plans(*)
+          `)
+          .eq('id', profile.empresa_id)
+          .maybeSingle();
+
+        if (empresaError) {
+          console.error('Erro ao buscar empresa:', empresaError);
+        }
+
+        if (empresa) {
+          const empresaData: Empresa = {
+            id: empresa.id,
+            nome: empresa.nome,
+            cnpj: empresa.cnpj,
+            segmento: empresa.segmento,
+            currentPlan: empresa.current_plan ? {
+              ...empresa.current_plan,
+              features: convertJsonToFeatures(empresa.current_plan.features)
+            } as Plan : undefined
+          };
+          setEmpresa(empresaData);
+        }
+      }
+
+      const userData: Usuario = {
+        id: profile.id,
+        nome: profile.nome,
+        email: profile.email,
+        empresaId: profile.empresa_id,
+        avatarUrl: profile.avatar_url,
+        cargo: profile.cargo,
+        createdAt: profile.created_at
+      };
+
+      setUser(userData);
+    } catch (error: any) {
+      console.error('Erro ao carregar dados do usuário:', error);
+      setError(error.message || 'Erro ao carregar dados do usuário');
+    }
+  };
+
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Timeout de segurança para garantir que loading seja false
+    const safetyTimeout = setTimeout(() => {
+      setLoading(false);
+    }, 5000);
+
+    // Configurar listener PRIMEIRO
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state changed:', event);
       setError(null);
       
+      // Apenas operações síncronas aqui
       if (session?.user) {
-        try {
-          console.log('Buscando perfil para usuário:', session.user.id);
-          
-          // Primeiro, verificar se o perfil existe
-          const { data: profile, error: profileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', session.user.id)
-            .maybeSingle();
-
-          if (profileError) {
-            console.error('Erro ao buscar perfil:', profileError);
-            throw new Error('Erro ao carregar perfil do usuário.');
-          }
-
-          if (!profile) {
-            console.error('Perfil não encontrado para o usuário:', session.user.id);
-            console.log('Verificando se o usuário existe na auth...');
-            
-            // Tentar criar o perfil se não existir
-            const { data: newProfile, error: createError } = await supabase
-              .from('profiles')
-              .insert({
-                id: session.user.id,
-                email: session.user.email,
-                nome: session.user.user_metadata?.nome || session.user.email?.split('@')[0] || 'Usuário'
-              })
-              .select()
-              .single();
-
-            if (createError) {
-              console.error('Erro ao criar perfil:', createError);
-              setError('Erro ao criar perfil de usuário. Entre em contato com o suporte.');
-              await supabase.auth.signOut();
-              return;
-            }
-
-            console.log('Perfil criado com sucesso:', newProfile);
-            
-            // Usar o perfil recém-criado
-            const userData: Usuario = {
-              id: newProfile.id,
-              nome: newProfile.nome,
-              email: newProfile.email,
-              empresaId: newProfile.empresa_id,
-              avatarUrl: newProfile.avatar_url,
-              cargo: newProfile.cargo,
-              createdAt: newProfile.created_at
-            };
-
-            setUser(userData);
-            setEmpresa(null); // Sem empresa ainda
-            setLoading(false);
-            return;
-          }
-
-          console.log('Perfil encontrado:', profile);
-
-          // Se tem empresa_id, buscar dados da empresa
-          if (profile.empresa_id) {
-            const { data: empresa, error: empresaError } = await supabase
-              .from('empresas')
-              .select(`
-                *,
-                current_plan:plans(*)
-              `)
-              .eq('id', profile.empresa_id)
-              .maybeSingle();
-
-            if (empresaError) {
-              console.error('Erro ao buscar empresa:', empresaError);
-            }
-
-            if (empresa) {
-              const empresaData: Empresa = {
-                id: empresa.id,
-                nome: empresa.nome,
-                cnpj: empresa.cnpj,
-                segmento: empresa.segmento,
-                currentPlan: empresa.current_plan ? {
-                  ...empresa.current_plan,
-                  features: convertJsonToFeatures(empresa.current_plan.features)
-                } as Plan : undefined
-              };
-              setEmpresa(empresaData);
-            }
-          }
-
-          const userData: Usuario = {
-            id: profile.id,
-            nome: profile.nome,
-            email: profile.email,
-            empresaId: profile.empresa_id,
-            avatarUrl: profile.avatar_url,
-            cargo: profile.cargo,
-            createdAt: profile.created_at
-          };
-
-          setUser(userData);
-        } catch (error: any) {
-          console.error('Erro ao carregar dados do usuário:', error);
-          setError(error.message || 'Erro ao carregar dados do usuário');
-          // Fazer logout em caso de erro crítico
-          await supabase.auth.signOut();
-        }
+        // Deferir busca de perfil com setTimeout
+        setTimeout(() => {
+          fetchUserProfile(session.user.id);
+        }, 0);
       } else {
         setUser(null);
         setEmpresa(null);
       }
+      
+      // SEMPRE chamar setLoading(false) sincronamente
       setLoading(false);
+      clearTimeout(safetyTimeout);
     });
 
-    return () => subscription.unsubscribe();
+    // DEPOIS verificar sessão existente
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setTimeout(() => {
+          fetchUserProfile(session.user.id);
+        }, 0);
+      }
+      setLoading(false);
+      clearTimeout(safetyTimeout);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      clearTimeout(safetyTimeout);
+    };
   }, []);
 
   const login = async (email: string, password: string) => {
