@@ -84,9 +84,10 @@ export function CategoriaForm({
   }, [categoria, form]);
 
   const onSubmit = async (values: CategoriaFormValues) => {
-    if (!user?.empresaId) {
-      toast("Erro ao salvar categoria", {
-        description: "Você não está associado a uma empresa.",
+    // Validação robusta de empresaId
+    if (!user?.empresaId || typeof user.empresaId !== 'string' || user.empresaId === 'null') {
+      toast.error("Erro ao salvar categoria", {
+        description: "Você precisa estar associado a uma empresa para criar categorias.",
       });
       return;
     }
@@ -94,11 +95,14 @@ export function CategoriaForm({
     try {
       setIsSubmitting(true);
       
+      // Garantir que valores opcionais sejam null, não undefined ou string "null"
+      const parentId = values.parentId?.trim() ? values.parentId : null;
+      
       const categoriaData = {
-        nome: values.nome,
+        nome: values.nome.trim(),
         cor: values.cor,
-        descricao: values.descricao || null,
-        parent_id: values.parentId || null,
+        descricao: values.descricao?.trim() || null,
+        parent_id: parentId,
         empresa_id: user.empresaId,
       };
       

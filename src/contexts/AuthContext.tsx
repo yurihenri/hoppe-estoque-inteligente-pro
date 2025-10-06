@@ -73,9 +73,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: newProfile.id,
           nome: newProfile.nome,
           email: newProfile.email,
-          empresaId: newProfile.empresa_id,
-          avatarUrl: newProfile.avatar_url,
-          cargo: newProfile.cargo,
+          empresaId: newProfile.empresa_id || null, // Garantir que seja null, não undefined
+          avatarUrl: newProfile.avatar_url || null,
+          cargo: newProfile.cargo || null,
           createdAt: newProfile.created_at
         };
 
@@ -117,9 +117,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: profile.id,
         nome: profile.nome,
         email: profile.email,
-        empresaId: profile.empresa_id,
-        avatarUrl: profile.avatar_url,
-        cargo: profile.cargo,
+        empresaId: profile.empresa_id || null, // Garantir que seja null, não undefined
+        avatarUrl: profile.avatar_url || null,
+        cargo: profile.cargo || null,
         createdAt: profile.created_at
       };
 

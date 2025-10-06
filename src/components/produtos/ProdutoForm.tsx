@@ -200,9 +200,10 @@ export function ProdutoForm({
   };
 
   const onSubmit = async (values: ProdutoFormValues) => {
-    if (!user?.empresaId) {
-      toast("Erro ao salvar produto", {
-        description: "Você não está associado a uma empresa.",
+    // Validação robusta de empresaId
+    if (!user?.empresaId || typeof user.empresaId !== 'string' || user.empresaId === 'null') {
+      toast.error("Erro ao salvar produto", {
+        description: "Você precisa estar associado a uma empresa para criar produtos.",
       });
       return;
     }
@@ -211,7 +212,8 @@ export function ProdutoForm({
       setIsSubmitting(true);
       
       // First, check if we need to create a new category
-      let categoriaId = values.categoria_id;
+      // Garantir que categoria_id seja null se não for um UUID válido
+      let categoriaId = values.categoria_id?.trim() ? values.categoria_id : null;
       
       if (values.nova_categoria && values.nova_categoria.trim() !== "") {
         const { data, error } = await supabase
@@ -238,13 +240,13 @@ export function ProdutoForm({
       }
       
       const produtoData = {
-        nome: values.nome,
+        nome: values.nome.trim(),
         preco: values.preco,
         quantidade: values.quantidade,
         validade: values.validade ? values.validade.toISOString().split('T')[0] : null,
-        codigo_rastreio: values.codigo_rastreio || null,
-        categoria_id: categoriaId || null,
-        descricao: values.descricao || null,
+        codigo_rastreio: values.codigo_rastreio?.trim() || null,
+        categoria_id: categoriaId, // Já validado acima
+        descricao: values.descricao?.trim() || null,
         empresa_id: user.empresaId,
         data_entrada: values.data_entrada ? values.data_entrada.toISOString() : new Date().toISOString(),
       };

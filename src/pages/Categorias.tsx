@@ -142,11 +142,23 @@ const Categorias = () => {
       <div className="container mx-auto py-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">Categorias</h1>
-          <Button onClick={handleOpenNewForm}>
+          <Button 
+            onClick={handleOpenNewForm}
+            disabled={!user?.empresaId}
+            title={!user?.empresaId ? "Configure uma empresa antes de criar categorias" : ""}
+          >
             <Plus className="mr-2 h-4 w-4" />
             Nova Categoria
           </Button>
         </div>
+
+        {!user?.empresaId && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-yellow-800">
+              <strong>Atenção:</strong> Você precisa estar associado a uma empresa para gerenciar categorias.
+            </p>
+          </div>
+        )}
 
         <CategoriaSearch 
           searchTerm={searchTerm}
