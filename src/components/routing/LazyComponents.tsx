@@ -9,3 +9,4 @@ export const Alertas = lazy(() => import('@/pages/Alertas'));
 export const IntegracaoDados = lazy(() => import('@/pages/IntegracaoDados'));
 export const Configuracoes = lazy(() => import('@/pages/Configuracoes'));
 export const Planos = lazy(() => import('@/pages/Planos'));
+export const Onboarding = lazy(() => import('@/pages/Onboarding'));

@@ -34,7 +34,13 @@ const Index = () => {
   useEffect(() => {
     if (!isLoading) {
       if (user) {
-        navigate("/dashboard");
+        // Check if user has empresa_id
+        const hasEmpresa = user.empresaId && user.empresaId !== "null";
+        if (!hasEmpresa) {
+          navigate("/onboarding");
+        } else {
+          navigate("/dashboard");
+        }
       } else {
         navigate("/login");
       }
