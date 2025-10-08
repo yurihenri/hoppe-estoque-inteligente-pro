@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTheme } from "next-themes";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -29,9 +30,7 @@ type ProfileFormValues = {
 const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [isDarkTheme, setIsDarkTheme] = useState(() => {
-    return localStorage.getItem("theme") === "dark";
-  });
+  const { theme, setTheme } = useTheme();
 
   const { register, handleSubmit, formState: { errors } } = useForm<ProfileFormValues>({
     defaultValues: {
@@ -91,17 +90,8 @@ const ProfileSettings = ({ user }: ProfileSettingsProps) => {
   };
 
   const toggleTheme = () => {
-    const newTheme = isDarkTheme ? "light" : "dark";
-    setIsDarkTheme(!isDarkTheme);
-    localStorage.setItem("theme", newTheme);
-    
-    // Apply theme to document
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
-    
+    const newTheme = theme === "dark" ? "light" : "dark";
+    setTheme(newTheme);
     toast.success(`Tema ${newTheme === "dark" ? "escuro" : "claro"} aplicado`);
   };
 
@@ -230,7 +220,7 @@ const ProfileSettings = ({ user }: ProfileSettingsProps) => {
                   <Label htmlFor="theme-toggle">Tema escuro</Label>
                   <Switch
                     id="theme-toggle"
-                    checked={isDarkTheme}
+                    checked={theme === "dark"}
                     onCheckedChange={toggleTheme}
                   />
                 </div>

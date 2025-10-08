@@ -3,6 +3,7 @@ import React from "react";
 import { Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 import { mockAlertas } from "@/mockData";
 
 interface HeaderProps {
@@ -17,6 +18,7 @@ const Header: React.FC<HeaderProps> = ({ title }) => {
       <h1 className="text-2xl font-semibold text-foreground">{title}</h1>
       
       <div className="flex items-center space-x-4">
+        <ThemeToggle />
         <Button variant="outline" size="icon" className="relative">
           <Bell size={20} />
           {alertasNaoLidos.length > 0 && (
