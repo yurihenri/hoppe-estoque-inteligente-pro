@@ -102,21 +102,36 @@ export function ProdutoForm({
 
   useEffect(() => {
     const loadCategorias = async () => {
+      if (!user?.empresaId) {
+        console.warn('[ProdutoForm] Usuário sem empresa_id, não é possível carregar categorias');
+        toast.error("Erro ao carregar categorias", {
+          description: "Você precisa estar associado a uma empresa.",
+        });
+        return;
+      }
+
       try {
+        console.log('[ProdutoForm] Carregando categorias para empresa:', user.empresaId);
+        
         const { data, error } = await supabase
           .from("categorias")
           .select("*")
+          .eq("empresa_id", user.empresaId)
           .order("nome");
         
-        if (error) throw error;
+        if (error) {
+          console.error('[ProdutoForm] Erro ao carregar categorias:', error);
+          throw error;
+        }
         
         // Transform the data to match our Categoria type
         const normalizedCategorias = data?.map(cat => normalizeCategoria(cat)) || [];
+        console.log('[ProdutoForm] Categorias carregadas:', normalizedCategorias.length);
         setCategorias(normalizedCategorias);
       } catch (error: any) {
-        console.error("Erro ao carregar categorias:", error);
-        toast("Erro ao carregar categorias", {
-          description: error.message,
+        console.error("[ProdutoForm] Erro ao carregar categorias:", error);
+        toast.error("Erro ao carregar categorias", {
+          description: error.message || "Verifique se você tem permissão para acessar as categorias.",
         });
       }
     };
@@ -124,7 +139,7 @@ export function ProdutoForm({
     if (isOpen) {
       loadCategorias();
     }
-  }, [isOpen]);
+  }, [isOpen, user?.empresaId]);
 
   useEffect(() => {
     // Reset form with produto values when the produto changes
@@ -202,6 +217,7 @@ export function ProdutoForm({
   const onSubmit = async (values: ProdutoFormValues) => {
     // Validação robusta de empresaId
     if (!user?.empresaId || typeof user.empresaId !== 'string' || user.empresaId === 'null') {
+      console.error('[ProdutoForm] empresaId inválido:', user?.empresaId);
       toast.error("Erro ao salvar produto", {
         description: "Você precisa estar associado a uma empresa para criar produtos.",
       });
@@ -210,6 +226,13 @@ export function ProdutoForm({
 
     try {
       setIsSubmitting(true);
+      
+      console.log('[ProdutoForm] Iniciando salvamento:', {
+        empresaId: user.empresaId,
+        produtoNome: values.nome,
+        categoriaId: values.categoria_id,
+        isUpdate: !!produto
+      });
       
       // First, check if we need to create a new category
       // Garantir que categoria_id seja null se não for um UUID válido
@@ -270,9 +293,14 @@ export function ProdutoForm({
           .single();
       }
 
-      if (response.error) throw response.error;
+      if (response.error) {
+        console.error('[ProdutoForm] Erro ao salvar produto:', response.error);
+        throw response.error;
+      }
 
-      toast(
+      console.log('[ProdutoForm] Produto salvo com sucesso:', response.data);
+
+      toast.success(
         produto ? "Produto atualizado" : "Produto cadastrado",
         {
           description: `O produto ${values.nome} foi ${produto ? "atualizado" : "cadastrado"} com sucesso.`,
@@ -282,9 +310,18 @@ export function ProdutoForm({
       onSubmitSuccess();
       onClose();
     } catch (error: any) {
-      console.error("Erro ao salvar produto:", error);
-      toast("Erro ao salvar produto", {
-        description: error.message,
+      console.error("[ProdutoForm] Erro ao salvar produto:", error);
+      
+      // Tratamento específico para erros de RLS
+      let errorMessage = error.message;
+      if (error.message?.includes('row-level security')) {
+        errorMessage = "Você não tem permissão para realizar esta ação. Verifique se está associado à empresa correta.";
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = "Já existe um produto com essas informações.";
+      }
+      
+      toast.error("Erro ao salvar produto", {
+        description: errorMessage,
       });
     } finally {
       setIsSubmitting(false);

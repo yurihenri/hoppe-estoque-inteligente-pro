@@ -13,16 +13,26 @@ import { toast } from "sonner";
 import { normalizeProduto } from "@/utils/normalizeData";
 import { Input } from "@/components/ui/input";
 import { useDebounce } from "@/hooks/useDebounce";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const ListaProdutos: React.FC = () => {
+  const { user } = useAuth();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   const debouncedSearchTerm = useDebounce(searchTerm, 300);
 
   // Fetch produtos
   const { data: produtos, isLoading, error } = useQuery({
-    queryKey: ['produtos'],
+    queryKey: ['produtos', user?.empresaId],
+    enabled: !!user?.empresaId,
     queryFn: async () => {
+      if (!user?.empresaId) {
+        console.warn('[ListaProdutos] empresaId não encontrado');
+        return [];
+      }
+
+      console.log('[ListaProdutos] Buscando produtos para empresa:', user.empresaId);
+      
       // Fetch produtos with categorias
       const { data: produtosData, error: produtosError } = await supabase
         .from('produtos')
@@ -34,9 +44,13 @@ export const ListaProdutos: React.FC = () => {
             cor
           )
         `)
+        .eq('empresa_id', user.empresaId)
         .order('validade');
 
-      if (produtosError) throw produtosError;
+      if (produtosError) {
+        console.error('[ListaProdutos] Erro ao buscar produtos:', produtosError);
+        throw produtosError;
+      }
 
       // Normalize data
       return produtosData.map((produto) => {
@@ -87,8 +101,29 @@ export const ListaProdutos: React.FC = () => {
     (produto.validade && format(new Date(produto.validade), 'dd/MM/yyyy').includes(debouncedSearchTerm))
   ) || [];
 
+  if (!user?.empresaId) {
+    return (
+      <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+        <p className="text-sm text-yellow-800">
+          <strong>Atenção:</strong> Você precisa estar associado a uma empresa para visualizar produtos.
+        </p>
+      </div>
+    );
+  }
+
   if (isLoading) return <div className="p-4">Carregando produtos...</div>;
-  if (error) return <div className="p-4 text-erro-500">Erro ao carregar produtos</div>;
+  
+  if (error) {
+    console.error('[ListaProdutos] Erro ao renderizar:', error);
+    return (
+      <div className="p-4 text-erro-500">
+        <p className="font-medium">Erro ao carregar produtos</p>
+        <p className="text-sm mt-1">
+          {error instanceof Error ? error.message : 'Erro desconhecido'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">

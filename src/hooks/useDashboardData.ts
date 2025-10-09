@@ -2,19 +2,46 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { addDays, isBefore, isAfter } from "date-fns";
 import { normalizeProduto } from "@/utils/normalizeData";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useDashboardData = () => {
+  const { user } = useAuth();
+  
   return useQuery({
-    queryKey: ['dashboardData'],
+    queryKey: ['dashboardData', user?.empresaId],
+    enabled: !!user?.empresaId,
     queryFn: async () => {
+      if (!user?.empresaId) {
+        console.warn('[useDashboardData] empresaId não encontrado');
+        return {
+          produtos: [],
+          stats: {
+            totalProdutos: 0,
+            produtosVencidos: 0,
+            produtosAVencer: 0,
+            produtosEstoqueBaixo: 0,
+            produtosSemCategoria: 0
+          },
+          produtosVencidos: [],
+          produtosAVencer: [],
+          produtosEstoqueBaixo: []
+        };
+      }
+
+      console.log('[useDashboardData] Buscando dados para empresa:', user.empresaId);
+
       const { data: produtos, error } = await supabase
         .from('produtos')
         .select(`
           *,
           categoria:categorias(id, nome, cor)
-        `);
+        `)
+        .eq('empresa_id', user.empresaId);
       
-      if (error) throw error;
+      if (error) {
+        console.error('[useDashboardData] Erro ao buscar produtos:', error);
+        throw error;
+      }
       
       const today = new Date();
       const nextWeek = addDays(today, 7);
