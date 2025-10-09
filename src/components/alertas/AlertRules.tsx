@@ -19,6 +19,7 @@ export const getRules = (): AlertRule[] => {
 
 const AlertRules = () => {
   const [rules, setRules] = useState<AlertRule[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [newRule, setNewRule] = useState<AlertRule>({
     id: crypto.randomUUID(),
     createdAt: new Date().toISOString(),
@@ -65,6 +66,7 @@ const AlertRules = () => {
     
     setRules([...rules, newRule]);
     resetForm();
+    setIsDialogOpen(false);
     toast.success("Regra de alerta criada com sucesso");
   };
 
@@ -91,7 +93,7 @@ const AlertRules = () => {
           <p className="text-sm text-muted-foreground">Configure condições para receber alertas automáticos</p>
         </div>
         
-        <Dialog>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -216,12 +218,10 @@ const AlertRules = () => {
             <p className="text-sm text-muted-foreground mt-2 mb-6">
               Configure regras para receber alertas automáticos sobre seu estoque
             </p>
-            <DialogTrigger asChild>
-              <Button>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Criar primeira regra
-              </Button>
-            </DialogTrigger>
+            <Button onClick={() => setIsDialogOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Criar primeira regra
+            </Button>
           </CardContent>
         </Card>
       ) : (
