@@ -23,6 +23,7 @@ export type Database = {
           id: string
           nome: string
           parent_id: string | null
+          updated_at: string | null
         }
         Insert: {
           cor?: string | null
@@ -32,6 +33,7 @@ export type Database = {
           id?: string
           nome: string
           parent_id?: string | null
+          updated_at?: string | null
         }
         Update: {
           cor?: string | null
@@ -41,6 +43,7 @@ export type Database = {
           id?: string
           nome?: string
           parent_id?: string | null
+          updated_at?: string | null
         }
         Relationships: [
           {
@@ -189,6 +192,7 @@ export type Database = {
           empresa_id: string | null
           id: string
           nome: string
+          user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -198,6 +202,7 @@ export type Database = {
           empresa_id?: string | null
           id: string
           nome: string
+          user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -207,6 +212,7 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           nome?: string
+          user_id?: string | null
         }
         Relationships: [
           {
