@@ -192,7 +192,6 @@ export type Database = {
           empresa_id: string | null
           id: string
           nome: string
-          user_id: string | null
         }
         Insert: {
           avatar_url?: string | null
@@ -202,7 +201,6 @@ export type Database = {
           empresa_id?: string | null
           id: string
           nome: string
-          user_id?: string | null
         }
         Update: {
           avatar_url?: string | null
@@ -212,7 +210,6 @@ export type Database = {
           empresa_id?: string | null
           id?: string
           nome?: string
-          user_id?: string | null
         }
         Relationships: [
           {

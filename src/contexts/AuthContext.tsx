@@ -47,39 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
 
       if (!profile) {
-        console.error('Perfil não encontrado, criando novo perfil...');
-        
-        const { data: session } = await supabase.auth.getSession();
-        const userEmail = session?.session?.user?.email;
-        const userName = session?.session?.user?.user_metadata?.nome;
-        
-        const { data: newProfile, error: createError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: userEmail,
-            nome: userName || userEmail?.split('@')[0] || 'Usuário'
-          })
-          .select()
-          .single();
-
-        if (createError) {
-          console.error('Erro ao criar perfil:', createError);
-          setError('Erro ao criar perfil de usuário.');
-          return;
-        }
-
-        const userData: Usuario = {
-          id: newProfile.id,
-          nome: newProfile.nome,
-          email: newProfile.email,
-          empresaId: newProfile.empresa_id || null, // Garantir que seja null, não undefined
-          avatarUrl: newProfile.avatar_url || null,
-          cargo: newProfile.cargo || null,
-          createdAt: newProfile.created_at
-        };
-
-        setUser(userData);
+        console.log('Perfil não encontrado. Aguardando criação automática pelo trigger...');
+        setError('Perfil em criação. Por favor, aguarde alguns segundos e faça login novamente.');
         return;
       }
 
@@ -117,7 +86,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         id: profile.id,
         nome: profile.nome,
         email: profile.email,
-        empresaId: profile.empresa_id || null, // Garantir que seja null, não undefined
+        empresaId: profile.empresa_id || null,
         avatarUrl: profile.avatar_url || null,
         cargo: profile.cargo || null,
         createdAt: profile.created_at
