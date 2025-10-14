@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/sonner';
-import { Database, CheckCircle } from 'lucide-react';
+import { CheckCircle } from 'lucide-react';
+import { secureStorage } from '@/utils/secureStorage';
 
 const IntegracaoAPI = () => {
   const [apiUrl, setApiUrl] = useState('');
@@ -47,7 +48,7 @@ const IntegracaoAPI = () => {
 
     // Simular ativação
     setTimeout(() => {
-      // Salvar configuração no localStorage
+      // Salvar configuração usando secureStorage
       const config = {
         apiUrl,
         syncInterval: Number(syncInterval),
@@ -55,21 +56,21 @@ const IntegracaoAPI = () => {
         active: true
       };
       
-      localStorage.setItem('apiIntegracao', JSON.stringify(config));
+      secureStorage.set('apiIntegracao', config, { encrypt: true, expiration: 43200 }); // 30 days
       
-      // Adicionar ao histórico
-      const historico = JSON.parse(localStorage.getItem('importacoes') || '[]');
+      // Adicionar ao histórico usando secureStorage
+      const historico = secureStorage.get('importacoes', false) || [];
       const novaIntegracao = {
         id: `api-${Date.now()}`,
         data: new Date().toISOString(),
         metodo: 'API',
-        quantidade: Math.floor(Math.random() * 50) + 5, // Aleatório para simulação
+        quantidade: Math.floor(Math.random() * 50) + 5,
         status: 'Sucesso',
         origem: apiUrl
       };
       
       historico.unshift(novaIntegracao);
-      localStorage.setItem('importacoes', JSON.stringify(historico.slice(0, 20)));
+      secureStorage.set('importacoes', historico.slice(0, 20), { expiration: 43200 }); // 30 days
       
       setIsActivating(false);
       toast.success('Integração API ativada com sucesso!');
@@ -100,6 +101,9 @@ const IntegracaoAPI = () => {
                 value={apiKey}
                 onChange={(e) => setApiKey(e.target.value)}
               />
+              <p className="text-xs text-muted-foreground">
+                Nota: Por segurança, chaves de API devem ser gerenciadas via servidor. Esta é uma implementação de demonstração.
+              </p>
             </div>
             
             <div className="space-y-2">

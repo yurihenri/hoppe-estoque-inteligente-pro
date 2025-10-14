@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Download } from 'lucide-react';
 import { format } from 'date-fns';
+import { secureStorage } from '@/utils/secureStorage';
 
 interface Importacao {
   id: string;
@@ -20,8 +21,8 @@ const HistoricoImportacoes = () => {
   const [importacoes, setImportacoes] = useState<Importacao[]>([]);
 
   useEffect(() => {
-    // Carregar histórico do localStorage
-    const historico = JSON.parse(localStorage.getItem('importacoes') || '[]');
+    // Carregar histórico do secureStorage
+    const historico = secureStorage.get('importacoes', false) || [];
     setImportacoes(historico);
   }, []);
 

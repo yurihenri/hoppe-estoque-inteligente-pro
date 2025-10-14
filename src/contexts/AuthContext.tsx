@@ -32,8 +32,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Função separada para buscar dados do perfil/empresa
   const fetchUserProfile = async (userId: string) => {
     try {
-      console.log('Buscando perfil para usuário:', userId);
-      
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('*')
@@ -41,13 +39,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .maybeSingle();
 
       if (profileError) {
-        console.error('Erro ao buscar perfil:', profileError);
         setError('Erro ao carregar perfil do usuário.');
         return;
       }
 
       if (!profile) {
-        console.log('Perfil não encontrado. Aguardando criação automática pelo trigger...');
         setError('Perfil em criação. Por favor, aguarde alguns segundos e faça login novamente.');
         return;
       }
@@ -64,7 +60,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .maybeSingle();
 
         if (empresaError) {
-          console.error('Erro ao buscar empresa:', empresaError);
+          setError('Erro ao carregar empresa');
         }
 
         if (empresa) {
@@ -94,7 +90,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       setUser(userData);
     } catch (error: any) {
-      console.error('Erro ao carregar dados do usuário:', error);
       setError(error.message || 'Erro ao carregar dados do usuário');
     }
   };
@@ -107,7 +102,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Configurar listener PRIMEIRO
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state changed:', event);
       setError(null);
       
       // Apenas operações síncronas aqui

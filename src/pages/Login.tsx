@@ -74,7 +74,6 @@ const Login = () => {
     try {
       // Sanitizar email antes de enviar
       const sanitizedEmail = data.email.toLowerCase().trim();
-      console.log('Tentando fazer login com email sanitizado:', sanitizedEmail);
       
       await login(sanitizedEmail, data.password);
       

@@ -103,7 +103,6 @@ export function ProdutoForm({
   useEffect(() => {
     const loadCategorias = async () => {
       if (!user?.empresaId) {
-        console.warn('[ProdutoForm] Usuário sem empresa_id, não é possível carregar categorias');
         toast.error("Erro ao carregar categorias", {
           description: "Você precisa estar associado a uma empresa.",
         });
@@ -111,8 +110,6 @@ export function ProdutoForm({
       }
 
       try {
-        console.log('[ProdutoForm] Carregando categorias para empresa:', user.empresaId);
-        
         const { data, error } = await supabase
           .from("categorias")
           .select("*")
@@ -120,13 +117,11 @@ export function ProdutoForm({
           .order("nome");
         
         if (error) {
-          console.error('[ProdutoForm] Erro ao carregar categorias:', error);
           throw error;
         }
         
         // Transform the data to match our Categoria type
         const normalizedCategorias = data?.map(cat => normalizeCategoria(cat)) || [];
-        console.log('[ProdutoForm] Categorias carregadas:', normalizedCategorias.length);
         setCategorias(normalizedCategorias);
       } catch (error: any) {
         console.error("[ProdutoForm] Erro ao carregar categorias:", error);
@@ -217,7 +212,6 @@ export function ProdutoForm({
   const onSubmit = async (values: ProdutoFormValues) => {
     // Validação robusta de empresaId
     if (!user?.empresaId || typeof user.empresaId !== 'string' || user.empresaId === 'null') {
-      console.error('[ProdutoForm] empresaId inválido:', user?.empresaId);
       toast.error("Erro ao salvar produto", {
         description: "Você precisa estar associado a uma empresa para criar produtos.",
       });
@@ -226,13 +220,6 @@ export function ProdutoForm({
 
     try {
       setIsSubmitting(true);
-      
-      console.log('[ProdutoForm] Iniciando salvamento:', {
-        empresaId: user.empresaId,
-        produtoNome: values.nome,
-        categoriaId: values.categoria_id,
-        isUpdate: !!produto
-      });
       
       // First, check if we need to create a new category
       // Garantir que categoria_id seja null se não for um UUID válido
@@ -294,11 +281,8 @@ export function ProdutoForm({
       }
 
       if (response.error) {
-        console.error('[ProdutoForm] Erro ao salvar produto:', response.error);
         throw response.error;
       }
-
-      console.log('[ProdutoForm] Produto salvo com sucesso:', response.data);
 
       toast.success(
         produto ? "Produto atualizado" : "Produto cadastrado",

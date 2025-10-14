@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { toast } from '@/components/ui/sonner';
 import { FileUp, Upload } from 'lucide-react';
+import { secureStorage } from '@/utils/secureStorage';
 
 type FileType = File | null;
 type MappingField = 'nome' | 'codigoBarras' | 'quantidade' | 'validade' | 'categoria';
@@ -67,19 +68,19 @@ const UploadManual = () => {
     
     // Simular processamento do arquivo
     setTimeout(() => {
-      // Simular armazenamento no localStorage
-      const historico = JSON.parse(localStorage.getItem('importacoes') || '[]');
+      // Simular armazenamento no secureStorage
+      const historico = secureStorage.get('importacoes', false) || [];
       const novaImportacao = {
         id: `imp-${Date.now()}`,
         data: new Date().toISOString(),
         metodo: 'upload',
-        quantidade: Math.floor(Math.random() * 100) + 10, // Aleatório para simulação
+        quantidade: Math.floor(Math.random() * 100) + 10,
         status: 'Sucesso',
         arquivo: selectedFile.name
       };
       
       historico.unshift(novaImportacao);
-      localStorage.setItem('importacoes', JSON.stringify(historico.slice(0, 20)));
+      secureStorage.set('importacoes', historico.slice(0, 20), { expiration: 43200 }); // 30 days
       
       setIsUploading(false);
       setSelectedFile(null);
